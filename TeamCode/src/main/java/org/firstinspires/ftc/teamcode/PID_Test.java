@@ -21,7 +21,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 public class PID_Test extends LinearOpMode {
 
     /* Declare OpMode members. */
-    THardware1 robot = new THardware1();   // Use a hardware
+    AHardware1 robot = new AHardware1();   // Use a hardware
     ElapsedTime runtime = new ElapsedTime();
     /*******  NEW *********/
     //Declarations for the tipping-control part

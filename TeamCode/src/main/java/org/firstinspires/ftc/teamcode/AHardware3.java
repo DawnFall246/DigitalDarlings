@@ -1,11 +1,17 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 /**
  * This is NOT an opmode.
@@ -21,7 +27,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Motor channel:  Front left drive motor:   "front_left_drive"
  * Motor channel:  Back left drive motor:    "back_left_drive"
  */
-public class THardware1
+public class AHardware3
 {
     /* Public OpMode members. */
     public DcMotor MFR   = null;
@@ -35,12 +41,15 @@ public class THardware1
     public Servo EndJoint = null;
     public Servo Gripper  = null;
 
+    public ColorSensor Color = null;
+    public BNO055IMU IMU = null;
+
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
     private ElapsedTime period  = new ElapsedTime();
 
     /* Constructor */
-    public THardware1(){
+    public AHardware3(){
 
     }
 
@@ -61,6 +70,23 @@ public class THardware1
         EndJoint = hwMap.servo.get("wrist");
         Gripper  = hwMap.servo.get("gripper");
 
+        Color = hwMap.colorSensor.get("color");
+
+        ColorValues.setAlpha(Color.alpha());
+        ColorValues.setRed(Color.red());
+        ColorValues.setGreen(Color.green());
+        ColorValues.setBlue(Color.blue());
+
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "IMU";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+        IMU = hwMap.get(BNO055IMU.class, "imu");
+        IMU.initialize(parameters);
+        IMU.startAccelerationIntegration(new Position(), new Velocity(), 1000);////////////////////////THIS IS A TEST////////////////////////////////////////////
 
         MFR.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
         MFL.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
@@ -76,26 +102,40 @@ public class THardware1
         MBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         MBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        MFR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        MFL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        MBR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        MBL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        MFR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        MFL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        MBR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        MBL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        ArmBase.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        ArmJoint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
 
         // Set all motors to zero power
+        MFR.setTargetPosition(0);
+        MFL.setTargetPosition(0);
+        MBR.setTargetPosition(0);
+        MBL.setTargetPosition(0);
         MFR.setPower(0);
         MFL.setPower(0);
         MBR.setPower(0);
         MBL.setPower(0);
 
+        ArmBase.setTargetPosition(20);
+        ArmBase.setPower(0.4);
+
+        ArmJoint.setTargetPosition(-40);
+        ArmJoint.setPower(0.4);
+
+        EndJoint.setPosition(.53);
 
 
     }
 
-    /**
+    /***
      *
      * waitForTick implements a periodic delay. However, this acts like a metronome with a regular
      * periodic tick.  This is used to compensate for varying processing times for each cycle.
