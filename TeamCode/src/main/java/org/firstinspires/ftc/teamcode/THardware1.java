@@ -34,6 +34,7 @@ public class THardware1
 
     public Servo EndJoint = null;
     public Servo Gripper  = null;
+    public Servo FoundationMover = null;
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
@@ -60,6 +61,7 @@ public class THardware1
 
         EndJoint = hwMap.servo.get("wrist");
         Gripper  = hwMap.servo.get("gripper");
+        FoundationMover = hwMap.servo.get("foundation");
 
 
         MFR.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
