@@ -329,5 +329,9 @@ public class NoTip2 extends LinearOpMode {
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         return parameters;
     }
+    //Foundation Mover
+    public void moveFoundation(){
+
+    }
     /*******  END *********/
 }
