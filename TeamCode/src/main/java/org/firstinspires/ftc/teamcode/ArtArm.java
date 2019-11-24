@@ -60,11 +60,13 @@ public class ArtArm {
     private double x = 0; //current x position
     private double y = 0; //current y position
 
-    private double getX(){
+    //public double max
+
+    public double getX(){
         return x;
     }
 
-    private double getY(){
+    public double getY(){
         return y;
     }
 

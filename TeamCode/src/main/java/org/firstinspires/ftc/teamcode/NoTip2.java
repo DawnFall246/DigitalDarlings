@@ -21,7 +21,7 @@ public class NoTip2 extends LinearOpMode {
 
     /* Declare OpMode members. */
     THardware1 robot = new THardware1();   // Use a hardware
-    ArtArm reach = new ArtArm(15, 16.5, 3, 1, 1, 2);
+    ArtArm arm = new ArtArm(robot,15, 16.5, 3, 1, 1, 2);
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime totalTime = new ElapsedTime();
     /*******  NEW *********/
@@ -52,15 +52,11 @@ public class NoTip2 extends LinearOpMode {
         double SRL;
         double T;
 
-        int L = 0;
         int state;
-        int lifted = 0;
 
         double max;
 
-        double current = 0;
-        double adjust;
-
+        /*
         double[] pos99 = {0, 0, 0.53};
 
         double[] pos10 = {-220, -351, 0.531};
@@ -77,6 +73,8 @@ public class NoTip2 extends LinearOpMode {
 
         double[] pos100 = {-163, -2740, 0.09};
 
+
+         */
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
          */
@@ -150,6 +148,9 @@ public class NoTip2 extends LinearOpMode {
             telemetry.addData("MFL", robot.MFL.getCurrentPosition());
 
             ////////////////////////////////////////////ARTICULATED ARM/////////////////////////////////////////////////////////
+            //while(arm.getX() > 0 && arm.getX() < arm.maxX())
+
+            /* Old state machine
             while (gamepad1.x) {
                 telemetry.addData("X: ", gamepad1.x);
                 telemetry.update();
@@ -210,13 +211,13 @@ public class NoTip2 extends LinearOpMode {
                         state = 300;
                 }
             }
-            /*
+
             if(state % 10 == 5){
                 if(gamepad1.a && state % 10 == 5)
                     robot.Rollers.setPower(1.0);
                 else
                     robot.Rollers.setPower(0.04);
-            }else {*/
+            }else {
                 while (gamepad1.a) {
                     telemetry.addData("A: ", gamepad1.a);
                     telemetry.update();
@@ -254,6 +255,7 @@ public class NoTip2 extends LinearOpMode {
                 armMove(pos35);
             if (state >= 100)
                 armMove(pos100);
+            */
             while(gamepad1.left_bumper){
                 moveFoundation1();
             }
@@ -307,7 +309,7 @@ public class NoTip2 extends LinearOpMode {
         robot.FoundationMover.setPosition(0.17);
     }
     public void moveFoundation2(){
-        robot.FoundationMover.setPosition(-0.17);
+        robot.FoundationMover.setPosition(0.67);
     }
 
     /*****NEW******/
@@ -340,6 +342,10 @@ public class NoTip2 extends LinearOpMode {
         parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         return parameters;
+    }
+    //Foundation Mover
+    public void moveFoundation(){
+
     }
     /*******  END *********/
 }
