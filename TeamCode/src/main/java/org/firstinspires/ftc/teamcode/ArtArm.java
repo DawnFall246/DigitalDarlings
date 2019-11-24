@@ -40,8 +40,11 @@ public class ArtArm {
     private double l1, l2; //lengths of arm segments
     private double g1, g2; //chain gears
     private double gb, gm; // big gear and motor gear
+    private ArmHardware robot;
 
-    ArtArm(double length1, double length2, double baseGear, double motorGear, double gear1, double gear2){
+    ArtArm(ArmHardware Robot, double length1, double length2, double baseGear, double motorGear, double gear1, double gear2){
+        robot = Robot;
+
         l1 = length1;
         l2 = length2;
 
@@ -52,11 +55,10 @@ public class ArtArm {
         g2 = gear2;
     }
 
-    private int position = 99; //current position number
-    //99 = home; 10 = extended; 1 = dropped; 100 = scorpion
+    private boolean contracted = true;
 
-    private double x = 0; //current x position in inches
-    private double y = 0; //current y position in inches
+    private double x = 0; //current x position
+    private double y = 0; //current y position
 
     private double getX(){
         return x;
@@ -93,58 +95,31 @@ public class ArtArm {
 
 
     public int getM1(){
-        return (int)((getA1()/* - 120*1680/360.0*/)*(gb/gm) * 1680 / 360); //motor counts
+        return (int)((getA1()/* - 120*1680/360.0*/)*(gb/gm) * 1680.0 / 360); //motor counts
     }
 
     public int getM2(){
-        return (int)((getA3()/* - 33.5*1680/360.0*/)*(gb/gm) * 1680 / 360); //motor counts
+        return (int)((getA3()/* - 33.5*1680/360.0*/)*(gb/gm) * 1680.0 / 360); //motor counts
     }
 
     public int getEEDeg(){
-        if(position == 100)
-            return 255;
+        if(contracted)
+            return 0;
         else
-            return (int)((90 - getD2()) + (180 - getD1() -getA2()));
+            return (int)((180 - getD2()) + (180 - getD1() - getA2()));
     }
 
+    public void goToXY(int xcor, int ycor){
+        x = xcor;
+        y = ycor;
 
-    public void extendPos(){
-        double xe = 0; //extended x position
-        double ye = 0; //extended y position
-
-        x = xe;
-        y = ye;
-
-        position = 10;
+        robot.ArmBase.setTargetPosition(getM1());
+        robot.ArmJoint.setTargetPosition(getM2());
+        robot.EndJoint.setPosition(getEEDeg() / 360.0);
     }
 
-    public void adjust(double adj){
-        x += adj;
-        if(x > l1+l2-1)
-            x = l1+l2-1;
-    }
-
-    public void dropPos(){
-        y -= 3;
-        if(y < 6.7-3.5)
-            y = 6.7-3.5;
-        position = 1;
-    }
-
-    public void scorpionPos(){
-        double xs = 0; //scorpion x position
-        double ys = 0; //scorpion y position
-
-        x = xs;
-        y = ys;
-
-        position = 100;
-    }
-
-    public int getPos(){ return position; }
-
-    public void setPos(int pos){
-        position = pos;
+    public void collapse(){
+        goToXY(10, 10);
     }
 
 }

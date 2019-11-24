@@ -21,7 +21,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Motor channel:  Front left drive motor:   "front_left_drive"
  * Motor channel:  Back left drive motor:    "back_left_drive"
  */
-public class THardware1
+public class THardware1 implements ArmHardware
 {
     /* Public OpMode members. */
     public DcMotor MFR   = null;
@@ -32,8 +32,8 @@ public class THardware1
     public DcMotor ArmBase  = null;
     public DcMotor ArmJoint = null;
 
-    public Servo EndJoint = null;
-    public Servo Gripper  = null;
+    public Servo EndJoint;
+    public Servo Gripper;
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
@@ -81,7 +81,9 @@ public class THardware1
         MBR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         MBL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+        ArmBase.setTargetPosition(0);
         ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        ArmJoint.setTargetPosition(0);
         ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
 
