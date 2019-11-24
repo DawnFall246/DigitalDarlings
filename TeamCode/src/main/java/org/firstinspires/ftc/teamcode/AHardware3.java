@@ -27,7 +27,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
  * Motor channel:  Front left drive motor:   "front_left_drive"
  * Motor channel:  Back left drive motor:    "back_left_drive"
  */
-public class AHardware3
+public class AHardware3 implements ArmHardware
 {
     /* Public OpMode members. */
     public DcMotor MFR   = null;
