@@ -254,7 +254,12 @@ public class NoTip2 extends LinearOpMode {
                 armMove(pos35);
             if (state >= 100)
                 armMove(pos100);
-
+            while(gamepad1.left_bumper){
+                moveFoundation1();
+            }
+            while(gamepad1.right_bumper){
+                moveFoundation2();
+            }
 
 
             /*******  NEW *********/
@@ -280,7 +285,9 @@ public class NoTip2 extends LinearOpMode {
             telemetry.addData("Time Left: ", 2*60 - totalTime.seconds());
             telemetry.addData("Base: ", robot.ArmBase.getCurrentPosition());
             telemetry.addData("Joint: ", robot.ArmJoint.getCurrentPosition());
-            telemetry.addData("Servo:", robot.EndJoint.getPosition());
+            telemetry.addData("Arm Servo:", robot.EndJoint.getPosition());
+            telemetry.addData("Mover Servo:", robot.FoundationMover.getPosition());
+
             telemetry.update();
             // Pause for metronome tick.  40 mS each cycle = update 25 times a second.
 
@@ -295,8 +302,13 @@ public class NoTip2 extends LinearOpMode {
         robot.ArmJoint.setPower(0.2);
         robot.EndJoint.setPosition(pos[2]);
     }
-
-
+    //Foundation Mover
+    public void moveFoundation1(){
+        robot.FoundationMover.setPosition(0.17);
+    }
+    public void moveFoundation2(){
+        robot.FoundationMover.setPosition(-0.17);
+    }
 
     /*****NEW******/
     /*
@@ -328,10 +340,6 @@ public class NoTip2 extends LinearOpMode {
         parameters.loggingTag = "IMU";
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         return parameters;
-    }
-    //Foundation Mover
-    public void moveFoundation(){
-
     }
     /*******  END *********/
 }
