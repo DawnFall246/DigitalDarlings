@@ -37,6 +37,7 @@ public class AHardware1
 
     public ColorSensor Color = null;
     public BNO055IMU IMU = null;
+    public Servo FoundationMover = null;
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
@@ -58,12 +59,14 @@ public class AHardware1
         MBR   = hwMap.dcMotor.get("br");
         MBL   = hwMap.dcMotor.get("bl");
 
+        FoundationMover = hwMap.servo.get("foundation");
         Color = hwMap.colorSensor.get("color");
 
         ColorValues.setAlpha(Color.alpha());
         ColorValues.setRed(Color.red());
         ColorValues.setGreen(Color.green());
         ColorValues.setBlue(Color.blue());
+
 
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
