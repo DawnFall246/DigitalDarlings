@@ -29,7 +29,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-
 /**
  * This a class that does calculations and ultimately returns the counts/degrees of the base motors
  * and end effector servo joint
@@ -40,10 +39,11 @@ public class ArtArm {
     private double l1, l2; //lengths of arm segments
     private double g1, g2; //chain gears
     private double gb, gm; // big gear and motor gear
+    private double x, y;
     private ArmHardware robot;
 
-    ArtArm(ArmHardware Robot, double length1, double length2, double baseGear, double motorGear, double gear1, double gear2){
-        robot = Robot;
+    ArtArm(ArmHardware Robot, double length1, double length2, double baseGear, double motorGear, double gear1, double gear2) {
+        //robot = Robot;
 
         l1 = length1;
         l2 = length2;
@@ -53,14 +53,10 @@ public class ArtArm {
 
         g1 = gear1;
         g2 = gear2;
+
+        x = 0;
+        y = 0;
     }
-
-    private boolean contracted = true;
-
-    private double x = 0; //current x position
-    private double y = 0; //current y position
-
-    //public double max
 
     public double getX(){
         return x;
@@ -72,6 +68,18 @@ public class ArtArm {
 
     private double getDist(double x, double y){
         return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    }
+
+    public double maxDist(){
+        return l1 + l2;
+    }
+
+    public double maxY(){
+        return Math.sqrt(Math.pow(maxDist(), 2) - Math.pow(getX(), 2));
+    }
+
+    public double maxX(){
+        return Math.sqrt(Math.pow(maxDist(), 2) - Math.pow(getY(), 2));
     }
 
     private double getD1(){
@@ -105,23 +113,18 @@ public class ArtArm {
     }
 
     public int getEEDeg(){
-        if(contracted)
-            return 0;
-        else
-            return (int)((180 - getD2()) + (180 - getD1() - getA2()));
+        return (int)((180 - getD2()) + (180 - getD1() - getA2()));
     }
 
-    public void goToXY(int xcor, int ycor){
+    public int[] goToXY(double xcor, double ycor){
         x = xcor;
         y = ycor;
 
-        robot.ArmBase.setTargetPosition(getM1());
-        robot.ArmJoint.setTargetPosition(getM2());
-        robot.EndJoint.setPosition(getEEDeg() / 360.0);
-    }
-
-    public void collapse(){
-        goToXY(10, 10);
+        int[] array = {getM1(), getM2(), getEEDeg()};
+        return array;
+        //robot.ArmBase.setTargetPosition(getM1());
+        //robot.ArmJoint.setTargetPosition(getM2());
+        //robot.EndJoint.setPosition(getEEDeg() / 360.0);
     }
 
 }

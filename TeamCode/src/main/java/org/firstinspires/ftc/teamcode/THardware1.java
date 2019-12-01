@@ -64,13 +64,13 @@ public class THardware1 implements ArmHardware
         FoundationMover = hwMap.servo.get("foundation");
 
 
-        MFR.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
-        MFL.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
-        MBR.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
-        MBL.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
+        MFR.setDirection(DcMotor.Direction.FORWARD);
+        MFL.setDirection(DcMotor.Direction.REVERSE);
+        MBR.setDirection(DcMotor.Direction.FORWARD);
+        MBL.setDirection(DcMotor.Direction.REVERSE);
 
-        ArmBase.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
-        ArmJoint.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
+        ArmBase.setDirection(DcMotor.Direction.FORWARD);
+        ArmJoint.setDirection(DcMotor.Direction.FORWARD);
 
 
         MFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
