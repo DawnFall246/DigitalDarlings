@@ -32,16 +32,16 @@ public class ArmAdjust extends LinearOpMode {
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
          */
+        ArtArm reach = new ArtArm(14.5, 15.75, 3, 1, 1, 2);
         robot.init(hardwareMap);
-        ArtArm reach = new ArtArm(robot, 15, 15, 3, 1, 1, 2);
 
         int base = 0;
         int joint = 0;
 
-        double x = 0;
-        double y = 0;
-        int[] pos = {0, 0, 0};
+        double[] pos = {0, 0, 0};
 
+        double x = 2;
+        double y = 1;
         double wrist = robot.EndJoint.getPosition();
 
         // Send telemetry message to signify robot waiting;
@@ -89,13 +89,13 @@ public class ArmAdjust extends LinearOpMode {
 
 
             pos = reach.goToXY(x, y);
-            robot.ArmBase.setTargetPosition(pos[0]);
+            robot.ArmBase.setTargetPosition((int) pos[0]);
             robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.ArmBase.setPower(0.3);
-            robot.ArmJoint.setTargetPosition(pos[1]);
+            robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
             robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.ArmJoint.setPower(0.3);
-            robot.EndJoint.setPosition(pos[2]/360.0);
+            //robot.EndJoint.setPosition(pos[2]/(1.5*Math.PI));
 
             if (gamepad1.left_bumper)
                 robot.FoundationMover.setPosition(.2);

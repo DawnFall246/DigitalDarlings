@@ -94,7 +94,7 @@ public class AHardware3 implements ArmHardware
         MBL.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
 
         ArmBase.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
-        ArmJoint.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
+        ArmJoint.setDirection(DcMotor.Direction.REVERSE); // Set to FORWARD if using AndyMark motors
 
 
         MFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

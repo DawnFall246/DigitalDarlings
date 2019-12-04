@@ -21,7 +21,7 @@ public class NoTip2 extends LinearOpMode {
 
     /* Declare OpMode members. */
     THardware1 robot = new THardware1();   // Use a hardware
-    ArtArm arm = new ArtArm(robot,15, 16.5, 3, 1, 1, 2);
+    ArtArm arm = new ArtArm(15, 16.5, 3, 1, 1, 2);
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime totalTime = new ElapsedTime();
     /*******  NEW *********/
@@ -307,10 +307,10 @@ public class NoTip2 extends LinearOpMode {
     }
     //Foundation Mover
     public void moveFoundation1(){
-        robot.FoundationMover.setPosition(0.17);
+        robot.FoundationMover.setPosition(0.27);
     }
     public void moveFoundation2(){
-        robot.FoundationMover.setPosition(0.90);
+        robot.FoundationMover.setPosition(0.80);
     }
 
     /*****NEW******/
