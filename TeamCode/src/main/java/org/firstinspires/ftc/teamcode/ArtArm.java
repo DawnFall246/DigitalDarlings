@@ -118,6 +118,8 @@ public class ArtArm {
         double a2 = Math.acos((-1 * Math.pow(getDist(), 2) + Math.pow(l1, 2) + Math.pow(l2, 2)) / (2*l1*l2));
         System.out.print("A2: ");
         System.out.println(a2 * 180/Math.PI);
+        if(a2 > Math.PI)
+            a2 = 2 * Math.PI - a2;
         return a2;
     }
 

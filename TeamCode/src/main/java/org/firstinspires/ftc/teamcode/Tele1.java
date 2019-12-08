@@ -64,6 +64,7 @@ public class Tele1 extends LinearOpMode {
 
         double max;
 
+        double servoPos = 0;
         double x = 2;
         double y = 1;
         double[] pos;
@@ -96,7 +97,7 @@ public class Tele1 extends LinearOpMode {
             /******************************************* BASE MOVE **********************************************************/
 
             SFB = -gamepad1.left_stick_y; /*The joystick goes negative when pushed forwards, so negate it*/
-            SRL = gamepad1.right_stick_x; // Check sign
+            SRL = gamepad1.right_stick_x + 0.5 * (gamepad2.right_trigger - gamepad2.left_trigger); // Check sign
             T = -gamepad1.left_stick_x;
 
             // Run wheels in POV mode
@@ -145,52 +146,77 @@ public class Tele1 extends LinearOpMode {
 
             /******************************************* ARM MOVE **********************************************************/
 
-            if(x > reach.maxX())
-                x = reach.maxX();
-            if(x < 0)
+            if(x > reach.maxX() - 0.5)
+                x = reach.maxX() - 0.5;
+            if(y > 10 && x < 2)
+                x = 2;
+            else if(x < 0)
                 x = 0;
             else
-                x += gamepad2.left_stick_x;
+                x -= gamepad2.right_stick_y * 0.25;
 
 
-            if(y > reach.maxY())
-                y = reach.maxY();
-            if(y < 0)
-                y = 0;
+            if(y > reach.maxY() - 0.5)
+                y = reach.maxY() - 0.5;
+            if(y < 1.5)
+                y = 1.5;
             else
-                y -= gamepad1.left_stick_y;
+                y -= gamepad2.left_stick_y * 0.25;
+
 
             if(gamepad2.y){
+                x = 7;
+                y = 2.5;
+                servoPos = 0;
+            }else if(gamepad2.x){
                 x = 2;
-                y = 1;
-            }
+                y = 1.5;
+                servoPos = 0.4;
+            }else if(!(x == 2 && y == 2))
+                servoPos = 0;
 
             pos = reach.goToXY(x, y);
             robot.ArmBase.setTargetPosition((int) pos[0]);
             robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.ArmBase.setPower(0.3);
+            robot.ArmBase.setPower(0.8);
             robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
             robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.ArmJoint.setPower(0.3);
-            if(Math.abs(gamepad2.right_stick_y) < 0.1)
-                robot.EndJoint.setPosition((-gamepad2.right_stick_y + 2) / 2);
+            robot.ArmJoint.setPower(0.6);
+            if(servoPos == 0)
+                servoPos = (2.0*Math.PI - pos[2])/(1.4*Math.PI);
+            if(servoPos >= 0 && servoPos <= 1)
+                robot.EndJoint.setPosition(servoPos);
+            else if(servoPos < 0)
+                robot.EndJoint.setPosition(0);
+            else if(servoPos > 1)
+                robot.EndJoint.setPosition(1);
             else
-                robot.EndJoint.setPosition(pos[2]/(1.5*Math.PI));
+                robot.EndJoint.setPosition(0.5);
+
 
             /********************************************* GRIPPER **********************************************************/
 
-            if(gamepad2.b){
-                robot.Gripper.setPosition(1.0);
-            } else if(gamepad2.a){
+            if(gamepad2.a){
                 robot.Gripper.setPosition(0.0);
+            } else if(gamepad2.b){
+                robot.Gripper.setPosition(1.0);
             }
+
+
+            telemetry.addData("X: ", reach.getX());
+            telemetry.addData("Y: ", reach.getY());
+            telemetry.addData(" " + pos[0] + " " + pos[1] + " " + pos[2], "");
+            telemetry.addData("Base: ", robot.ArmBase.getCurrentPosition());
+            telemetry.addData("Joint: ", robot.ArmJoint.getCurrentPosition());
+            telemetry.addData("Servo: ", robot.EndJoint.getPosition());
+            telemetry.update();
 
             /******************************************* FOUNDATION **********************************************************/
 
             if (gamepad1.left_bumper)
                 robot.FoundationMover.setPosition(.2);
             else if(gamepad1.right_bumper)
-                robot.FoundationMover.setPosition(.9);
+                robot.FoundationMover.setPosition(.8);
 
 
             telemetry.update();
