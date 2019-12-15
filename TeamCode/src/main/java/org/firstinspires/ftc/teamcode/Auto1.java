@@ -121,7 +121,19 @@ public class Auto1 extends LinearOpMode {
         telemetry.update();
         sleep(500);
         //gyroMoveStraight("r", 2000);
-        PIDMove(0, .5, 10000, .25, 0.15, .01);
+
+        //Move blue foundation
+        PIDMove(0, .5, 40.46, .25, 0.15, .01);
+        turn(-90);
+        PIDMove(0, .5, 120.02, .25, 0.15, .01);
+        turn(-90);
+        robot.FoundationMover.setPosition(0.17);
+        PIDMove(0, .5, 1, .25, 0.15, .01);
+        robot.FoundationMover.setPosition(0.67);
+        strafeLeft(47,5,3);
+        robot.FoundationMover.setPosition(0.17);
+        PIDMove(0, .5, 40.46, .25, 0.15, .01);
+
         telemetry.addData("Finish", "");
         robot.MBR.setPower(0);
         robot.MBL.setPower(0);
