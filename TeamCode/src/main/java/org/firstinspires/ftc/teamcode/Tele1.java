@@ -8,12 +8,33 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+
+/**
+ * game pad 1:
+ * move/turn - left stick
+ * strafe - right stick
+ * foundation up - button 1
+ * foundation down - button 2
+ *
+ * game pad 2:
+ * arm up/dn and in/out w/o changing end effector orientation - left stick
+ * end effector manual level and open/close - right stick (probably not used)
+ * Presets:
+ * arm and end effector move to pick-up position - button 1
+ * close end effector,  pick-up stone, collapse to fit under bridge - button 2 (or reuse button 1)
+ * <<after picking up stone, should we roll the end effetor back so that gravity is not working against us?>>
+ * end effector open - button 3
+ * end effector close - button 4
+ * retract arm to fit under bridge (only needed if button 1 does not fit under bridge) - button 5
+ */
+
 
 @TeleOp(name = "Tele1", group = "TeleOp")
 //@Disabled
@@ -22,12 +43,11 @@ public class Tele1 extends LinearOpMode {
     /* Declare OpMode members. */
     THardware1 robot = new THardware1();   // Use a hardware
     ElapsedTime runtime = new ElapsedTime();
-    /*******  NEW *********/
-    //Declarations for the tipping-control part
     BNO055IMU imu;
     Orientation angles;
     double target_x, current_x, now_seconds;
-    /*******  END *********/
+
+    ArtArm reach = new ArtArm(14.5, 15.75, 3, 1, 1, 2);
 
     //Double for more precision
     @Override
@@ -43,17 +63,21 @@ public class Tele1 extends LinearOpMode {
         double T;
 
         double max;
+
+        double servoPos = 0;
+        double x = 2;
+        double y = 1;
+        double[] pos;
+
         /* Initialize the hardware variables.
          * The init() method of the hardware class does all the work here
          */
         robot.init(hardwareMap);
 
-        /*******  NEW *********/
         //Initialize gyro stuff
         BNO055IMU.Parameters parameters = initIMUParams();
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
-        /*******  END *********/
 
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "Hello Driver");
@@ -63,21 +87,20 @@ public class Tele1 extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
-        /*******  NEW *********/
         //The "flat" robot angle
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
         target_x = angles.firstAngle;
-        /*******  END *********/
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            ////////////////////////////////////////////BASE MOVE/////////////////////////////////////////////////////////
 
-            SFB = -gamepad1.right_stick_y; /*The joystick goes negative when pushed forwards, so negate it*/
-            SRL = gamepad1.right_trigger - gamepad1.left_trigger;
-            T = -gamepad1.right_stick_x;
+            /******************************************* BASE MOVE **********************************************************/
+
+            SFB = -gamepad1.left_stick_y; /*The joystick goes negative when pushed forwards, so negate it*/
+            SRL = gamepad1.right_stick_x + 0.5 * (gamepad2.right_trigger - gamepad2.left_trigger); // Check sign
+            T = -gamepad1.left_stick_x;
+
             // Run wheels in POV mode
-            // In this mode the Left stick moves the robot fwd and back and turns left and right.
 
             MFR = (SFB + T - SRL) / 1.5; //controls base motion
             MFL = (SFB - T + SRL) / 1.5; //slows down robot to make it more manageable
@@ -106,7 +129,6 @@ public class Tele1 extends LinearOpMode {
             telemetry.addData("MFL", robot.MFL.getCurrentPosition());
 
 
-            /*******  NEW *********/
             //The part that checks to see if the robot is tipping
             angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
             current_x = angles.firstAngle;
@@ -121,7 +143,80 @@ public class Tele1 extends LinearOpMode {
                 now_seconds = runtime.seconds();
                 while ( runtime.seconds() < now_seconds + 0.5);
             }
-            /*******  END *********/
+
+            /******************************************* ARM MOVE **********************************************************/
+
+            if(x > reach.maxX() - 0.5)
+                x = reach.maxX() - 0.5;
+            if(y > 10 && x < 2)
+                x = 2;
+            else if(x < 0)
+                x = 0;
+            else
+                x -= gamepad2.right_stick_y * 0.25;
+
+
+            if(y > reach.maxY() - 0.5)
+                y = reach.maxY() - 0.5;
+            if(y < 1.5)
+                y = 1.5;
+            else
+                y -= gamepad2.left_stick_y * 0.25;
+
+
+            if(gamepad2.y){
+                x = 7;
+                y = 2.5;
+                servoPos = 0;
+            }else if(gamepad2.x){
+                x = 2;
+                y = 1.5;
+                servoPos = 0.4;
+            }else if(!(x == 2 && y == 2))
+                servoPos = 0;
+
+            pos = reach.goToXY(x, y);
+            robot.ArmBase.setTargetPosition((int) pos[0]);
+            robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmBase.setPower(0.8);
+            robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
+            robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmJoint.setPower(0.6);
+            if(servoPos == 0)
+                servoPos = (2.0*Math.PI - pos[2])/(1.4*Math.PI);
+            if(servoPos >= 0 && servoPos <= 1)
+                robot.EndJoint.setPosition(servoPos);
+            else if(servoPos < 0)
+                robot.EndJoint.setPosition(0);
+            else if(servoPos > 1)
+                robot.EndJoint.setPosition(1);
+            else
+                robot.EndJoint.setPosition(0.5);
+
+
+            /********************************************* GRIPPER **********************************************************/
+
+            if(gamepad2.a){
+                robot.Gripper.setPosition(0.0);
+            } else if(gamepad2.b){
+                robot.Gripper.setPosition(1.0);
+            }
+
+
+            telemetry.addData("X: ", reach.getX());
+            telemetry.addData("Y: ", reach.getY());
+            telemetry.addData(" " + pos[0] + " " + pos[1] + " " + pos[2], "");
+            telemetry.addData("Base: ", robot.ArmBase.getCurrentPosition());
+            telemetry.addData("Joint: ", robot.ArmJoint.getCurrentPosition());
+            telemetry.addData("Servo: ", robot.EndJoint.getPosition());
+            telemetry.update();
+
+            /******************************************* FOUNDATION **********************************************************/
+
+            if (gamepad1.left_bumper)
+                robot.FoundationMover.setPosition(.2);
+            else if(gamepad1.right_bumper)
+                robot.FoundationMover.setPosition(.8);
 
 
             telemetry.update();
@@ -131,8 +226,6 @@ public class Tele1 extends LinearOpMode {
         }
     }
 
-
-    /*******  NEW *********/
 
     //Tipping-check variables and methods
 
@@ -172,7 +265,8 @@ public class Tele1 extends LinearOpMode {
         parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
         return parameters;
     }
-    /*******  END *********/
+
+
 
 
 }

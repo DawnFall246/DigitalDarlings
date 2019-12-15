@@ -29,7 +29,6 @@
 
 package org.firstinspires.ftc.teamcode;
 
-
 /**
  * This a class that does calculations and ultimately returns the counts/degrees of the base motors
  * and end effector servo joint
@@ -40,10 +39,9 @@ public class ArtArm {
     private double l1, l2; //lengths of arm segments
     private double g1, g2; //chain gears
     private double gb, gm; // big gear and motor gear
-    private ArmHardware robot;
+    private double x, y;
 
-    ArtArm(ArmHardware Robot, double length1, double length2, double baseGear, double motorGear, double gear1, double gear2){
-        robot = Robot;
+    ArtArm(double length1, double length2, double baseGear, double motorGear, double gear1, double gear2) {
 
         l1 = length1;
         l2 = length2;
@@ -53,14 +51,10 @@ public class ArtArm {
 
         g1 = gear1;
         g2 = gear2;
+
+        x = 2;
+        y = 1;
     }
-
-    private boolean contracted = true;
-
-    private double x = 0; //current x position
-    private double y = 0; //current y position
-
-    //public double max
 
     public double getX(){
         return x;
@@ -70,58 +64,102 @@ public class ArtArm {
         return y;
     }
 
-    private double getDist(double x, double y){
-        return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
+    private double getDist(){
+        //System.out.print("getDist: ");
+        //System.out.println(Math.sqrt(Math.pow(getX(), 2) + Math.pow(getY(), 2)));
+        return Math.sqrt(Math.pow(getX(), 2) + Math.pow(getY(), 2));
+    }
+
+    public double maxDist(){
+        //System.out.print("maxDist: ");
+        //System.out.println(l1 + l2);
+        return l1 + l2;
+    }
+
+    public double maxY(){
+        //System.out.print("maxY: ");
+        //System.out.println(Math.sqrt(Math.pow(maxDist(), 2) - Math.pow(getX(), 2)));
+        return Math.sqrt(Math.pow(maxDist(), 2) - Math.pow(getX(), 2));
+    }
+
+    public double maxX(){
+        //System.out.print("maxX: ");
+        //System.out.println(Math.sqrt(Math.pow(maxDist(), 2) - Math.pow(getY(), 2)));
+        return Math.sqrt(Math.pow(maxDist(), 2) - Math.pow(getY(), 2));
     }
 
     private double getD1(){
-        return Math.acos((Math.pow(getDist(getX(), getY()), 2)) + Math.pow(l1, 2) - Math.pow(l2, 2) / 2*getDist(getX(), getY())*l1);
+        double d1 = Math.acos((Math.pow(getDist(), 2) + Math.pow(l1, 2) - Math.pow(l2, 2)) / (2*getDist()*l1));
+        //System.out.print("D1: ");
+        //System.out.println(d1);
+        return d1;
     }
 
     private double getD2(){
-        return Math.atan(getY()/getX());
+        //System.out.print("D2: ");
+        double d2;
+        if(getX() == 0)
+            d2 = Math.PI/2.0;
+        else
+            d2 = Math.atan2(getY(), getX());
+        //System.out.println(d2);
+        return d2;
     }
 
     public double getA1(){
         //(d1 + d2)
-        return getD1() + getD2();
+        double a1 = getD1() + getD2();
+        System.out.print("A1: ");
+        System.out.println(a1 * 180/Math.PI);
+        return a1;
     }
 
     public double getA2(){
-        return Math.acos((Math.pow(l2, 2) - Math.pow(l1, 2) + Math.pow(getDist(getX(), getY()), 2)) / 2*l1*l2);
+        double a2 = Math.acos((-1 * Math.pow(getDist(), 2) + Math.pow(l1, 2) + Math.pow(l2, 2)) / (2*l1*l2));
+        System.out.print("A2: ");
+        System.out.println(a2 * 180/Math.PI);
+        if(a2 > Math.PI)
+            a2 = 2 * Math.PI - a2;
+        return a2;
     }
 
     public double getA3(){
-        return (g2/g1)*getA2() - getA1();
+        double a3 = (g2/g1)*getA2() + getA1();
+        System.out.print("A3: ");
+        System.out.println(a3 * 180/Math.PI);
+        return a3;
     }
 
 
     public int getM1(){
-        return (int)((getA1()/* - 120*1680/360.0*/)*(gb/gm) * 1680.0 / 360); //motor counts
+        int m1 = (int)((getA1()/* - 120*1680/360.0*/)*(gb/gm) * 1120.0 / (2 * Math.PI)) - 1371;
+        //System.out.print("M1: ");
+        //System.out.println(m1);
+        return m1; //motor counts
     }
 
     public int getM2(){
-        return (int)((getA3()/* - 33.5*1680/360.0*/)*(gb/gm) * 1680.0 / 360); //motor counts
+        int m2 = ((int)((getA3()/* - 33.5*1680/360.0*/)*(gb/gm) * 1120.0 / (2 * Math.PI))) - 1502;
+        //System.out.print("M2: ");
+        //System.out.println(m2);
+        return m2; //motor counts
     }
 
-    public int getEEDeg(){
-        if(contracted)
-            return 0;
-        else
-            return (int)((180 - getD2()) + (180 - getD1() - getA2()));
+    public double getEERad(){
+        double rad = ((Math.PI - getD2()) + (Math.PI - getD1() - getA2()));
+        //System.out.print("EERad: ");
+        //System.out.println(rad);
+        return rad;
     }
 
-    public void goToXY(int xcor, int ycor){
+    public double[] goToXY(double xcor, double ycor){
         x = xcor;
         y = ycor;
 
-        robot.ArmBase.setTargetPosition(getM1());
-        robot.ArmJoint.setTargetPosition(getM2());
-        robot.EndJoint.setPosition(getEEDeg() / 360.0);
-    }
-
-    public void collapse(){
-        goToXY(10, 10);
+        double[] array = {getM1(), getM2(), getEERad()};
+        System.out.print("goTo: ");
+        System.out.println("[" + array[0] + " " + array[1] + " " + array[2] + "]");
+        return array;
     }
 
 }

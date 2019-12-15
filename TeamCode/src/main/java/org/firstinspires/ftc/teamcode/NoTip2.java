@@ -21,7 +21,7 @@ public class NoTip2 extends LinearOpMode {
 
     /* Declare OpMode members. */
     THardware1 robot = new THardware1();   // Use a hardware
-    ArtArm arm = new ArtArm(robot,15, 16.5, 3, 1, 1, 2);
+    ArtArm arm = new ArtArm(15, 16.5, 3, 1, 1, 2);
     ElapsedTime runtime = new ElapsedTime();
     ElapsedTime totalTime = new ElapsedTime();
     /*******  NEW *********/
@@ -142,13 +142,14 @@ public class NoTip2 extends LinearOpMode {
             robot.MBR.setPower(MBR);
             robot.MBL.setPower(MBL);
 
+
             telemetry.addData("MBR", robot.MBR.getCurrentPosition()); //Printing motor position on phone
             telemetry.addData("MBL", robot.MBL.getCurrentPosition());
             telemetry.addData("MFR", robot.MFR.getCurrentPosition());
             telemetry.addData("MFL", robot.MFL.getCurrentPosition());
 
             ////////////////////////////////////////////ARTICULATED ARM/////////////////////////////////////////////////////////
-            //while(arm.getX() > 0 && arm.getX() < arm.maxX())
+            //while(arm.getX() > 0 && arm.getX() < arm.maxDist)
 
             /* Old state machine
             while (gamepad1.x) {
@@ -256,10 +257,10 @@ public class NoTip2 extends LinearOpMode {
             if (state >= 100)
                 armMove(pos100);
             */
-            while(gamepad1.left_bumper){
+            if(gamepad1.left_bumper){
                 moveFoundation1();
             }
-            while(gamepad1.right_bumper){
+            if(gamepad1.right_bumper){
                 moveFoundation2();
             }
 
@@ -306,10 +307,10 @@ public class NoTip2 extends LinearOpMode {
     }
     //Foundation Mover
     public void moveFoundation1(){
-        robot.FoundationMover.setPosition(0.17);
+        robot.FoundationMover.setPosition(0.27);
     }
     public void moveFoundation2(){
-        robot.FoundationMover.setPosition(0.67);
+        robot.FoundationMover.setPosition(0.80);
     }
 
     /*****NEW******/

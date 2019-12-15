@@ -22,7 +22,7 @@ public interface ArmHardware
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
 
-
+    void init(HardwareMap ahwMap);
 
 
 }
