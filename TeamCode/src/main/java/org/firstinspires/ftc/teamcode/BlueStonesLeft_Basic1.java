@@ -68,9 +68,9 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
 
-@Autonomous(name = "Auto1", group = "Auto")
+@Autonomous(name = "Blue Stones Left Basic 1", group = "Auto")
 //@Disabled
-public class Auto1 extends LinearOpMode {
+public class BlueStonesLeft_Basic1 extends LinearOpMode {
 
     AHardware3 robot = new AHardware3();
     ArtArm arm = new ArtArm(14.5, 15.75, 3, 1, 1, 2);
