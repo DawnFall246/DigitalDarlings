@@ -1,17 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
-import org.firstinspires.ftc.robotcore.external.navigation.Position;
-import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
 /**
  * This is NOT an opmode.
@@ -27,7 +22,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
  * Motor channel:  Front left drive motor:   "front_left_drive"
  * Motor channel:  Back left drive motor:    "back_left_drive"
  */
-public class AHardware3 implements ArmHardware
+public class THardware2 implements ArmHardware
 {
     /* Public OpMode members. */
     public DcMotor MFR   = null;
@@ -35,21 +30,24 @@ public class AHardware3 implements ArmHardware
     public DcMotor MBR   = null;
     public DcMotor MBL   = null;
 
-    public DcMotor ArmBase  = null;
-    public DcMotor ArmJoint = null;
+    public DcMotorEx ArmBase  = null;
+    public DcMotorEx ArmJoint = null;
+
+    public static double P = 10;
+    public static double I = 0;
+    public static double D = 0;
+    public static double F = 0;
 
     public Servo EndJoint = null;
     public Servo Gripper  = null;
-
-    public ColorSensor Color = null;
-    public BNO055IMU IMU = null;
+    public Servo FoundationMover = null;
 
     /* local OpMode members. */
     HardwareMap hwMap           =  null;
     private ElapsedTime period  = new ElapsedTime();
 
     /* Constructor */
-    public AHardware3(){
+    public THardware2(){
 
     }
 
@@ -64,37 +62,21 @@ public class AHardware3 implements ArmHardware
         MBR   = hwMap.dcMotor.get("br");
         MBL   = hwMap.dcMotor.get("bl");
 
-        ArmBase  = hwMap.dcMotor.get("base");
-        ArmJoint = hwMap.dcMotor.get("joint");
+        ArmBase  = (DcMotorEx) hwMap.dcMotor.get("base");
+        ArmJoint = (DcMotorEx) hwMap.dcMotor.get("joint");
 
         EndJoint = hwMap.servo.get("wrist");
         Gripper  = hwMap.servo.get("gripper");
+        FoundationMover = hwMap.servo.get("foundation");
 
-        Color = hwMap.colorSensor.get("color");
 
-        ColorValues.setAlpha(Color.alpha());
-        ColorValues.setRed(Color.red());
-        ColorValues.setGreen(Color.green());
-        ColorValues.setBlue(Color.blue());
+        MFR.setDirection(DcMotor.Direction.FORWARD);
+        MFL.setDirection(DcMotor.Direction.REVERSE);
+        MBR.setDirection(DcMotor.Direction.FORWARD);
+        MBL.setDirection(DcMotor.Direction.REVERSE);
 
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json"; // see the calibration sample opmode
-        parameters.loggingEnabled = true;
-        parameters.loggingTag = "IMU";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
-        IMU = hwMap.get(BNO055IMU.class, "imu");
-        IMU.initialize(parameters);
-        IMU.startAccelerationIntegration(new Position(), new Velocity(), 1000);////////////////////////THIS IS A TEST////////////////////////////////////////////
-
-        MFR.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
-        MFL.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
-        MBR.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
-        MBL.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
-
-        ArmBase.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
-        ArmJoint.setDirection(DcMotor.Direction.REVERSE); // Set to FORWARD if using AndyMark motors
+        ArmBase.setDirection(DcMotor.Direction.FORWARD);
+        ArmJoint.setDirection(DcMotor.Direction.FORWARD);
 
 
         MFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -102,30 +84,40 @@ public class AHardware3 implements ArmHardware
         MBR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         MBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+        MFR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        MFL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        MBR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        MBL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // Set all motors to zero power
-        MFR.setTargetPosition(0);
-        MFR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        MFL.setTargetPosition(0);
-        MFL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        MBR.setTargetPosition(0);
-        MBR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        MBL.setTargetPosition(0);
-        MBL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        PIDFCoefficients BaseOg = ArmBase.getPIDFCoefficients(DcMotorEx.RunMode.RUN_TO_POSITION);
+        PIDFCoefficients JointOg = ArmBase.getPIDFCoefficients(DcMotorEx.RunMode.RUN_TO_POSITION);
 
-        ArmBase.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        ArmJoint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        // change coefficients using methods included with DcMotorEx class.
+        PIDFCoefficients BaseNew = new PIDFCoefficients(P, I, D, F);
+        ArmBase.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, BaseNew);
+
+        PIDFCoefficients JointNew = new PIDFCoefficients(P, I, D, F);
+        ArmJoint.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, JointNew);
+
 
         ArmBase.setTargetPosition(0);
         ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         ArmJoint.setTargetPosition(0);
         ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+        // Set all motors to zero power
+        MFR.setPower(0);
+        MFL.setPower(0);
+        MBR.setPower(0);
+        MBL.setPower(0);
 
+        EndJoint.setPosition(0.3);
+        Gripper.setPosition(0.0);
 
     }
 
-    /***
+    /**
      *
      * waitForTick implements a periodic delay. However, this acts like a metronome with a regular
      * periodic tick.  This is used to compensate for varying processing times for each cycle.

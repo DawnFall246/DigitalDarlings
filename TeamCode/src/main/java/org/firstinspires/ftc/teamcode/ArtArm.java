@@ -132,14 +132,14 @@ public class ArtArm {
 
 
     public int getM1(){
-        int m1 = (int)((getA1()/* - 120*1680/360.0*/)*(gb/gm) * 1120.0 / (2 * Math.PI)) - 1371;
+        int m1 = (int)((getA1()/* - 120*1680/360.0*/)*(gb/gm) * 1120.0 / (2 * Math.PI)) - 1365;
         //System.out.print("M1: ");
         //System.out.println(m1);
         return m1; //motor counts
     }
 
     public int getM2(){
-        int m2 = ((int)((getA3()/* - 33.5*1680/360.0*/)*(gb/gm) * 1120.0 / (2 * Math.PI))) - 1502;
+        int m2 = ((int)((getA3()/* - 33.5*1680/360.0*/)*(gb/gm) * 1120.0 / (2 * Math.PI))) - 1532;
         //System.out.print("M2: ");
         //System.out.println(m2);
         return m2; //motor counts

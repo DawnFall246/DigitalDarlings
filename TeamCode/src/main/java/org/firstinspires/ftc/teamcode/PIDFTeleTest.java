@@ -9,6 +9,8 @@ import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -36,33 +38,27 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
  */
 
 
-@TeleOp(name = "Tele1", group = "TeleOp")
+@TeleOp(name = "PIDF", group = "TeleOp")
 //@Disabled
-public class Tele1 extends LinearOpMode {
+public class PIDFTeleTest extends LinearOpMode {
 
     /* Declare OpMode members. */
-    THardware1 robot = new THardware1();   // Use a hardware
+    THardware2 robot = new THardware2();   // Use a hardware
     ElapsedTime runtime = new ElapsedTime();
     BNO055IMU imu;
     Orientation angles;
     double target_x, current_x, now_seconds;
 
-    ArtArm reach = new ArtArm(14.5, 15.75, 3, 1, 1, 2);
+    ArtArm reach = new ArtArm(14.5, 15.625, 3, 1, 1, 2);
 
     //Double for more precision
     @Override
     public void runOpMode() throws InterruptedException {
 
-        double MFR;
-        double MFL;
-        double MBR;
-        double MBL;
-
-        double SFB;
-        double SRL;
-        double T;
-
-        double max;
+        double p = 5;
+        double i = 0;
+        double d = 0;
+        double f = 0;
 
         double servoPos = 0;
         double x = 2;
@@ -97,73 +93,39 @@ public class Tele1 extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            /******************************************* BASE MOVE **********************************************************/
+            /********************************************* PIDF ************************************************************/
 
-            SFB = -gamepad1.left_stick_y; /*The joystick goes negative when pushed forwards, so negate it*/
-            SRL = (gamepad1.right_stick_x + 0.5 * (gamepad2.right_trigger - gamepad2.left_trigger))*1.25; // Check sign
-            T = -gamepad1.left_stick_x;
+            p -= gamepad1.right_stick_y*0.1;
+            i -= gamepad1.left_stick_y*0.1;
+            d += gamepad1.left_stick_x*0.1;
+            f += gamepad1.right_stick_x*0.1;
 
-            // Run wheels in POV mode
-
-            if(Math.abs(SFB) > 0.4 && Math.abs(T) < 0.2)
-                T = 0;
-
-            MFR = (SFB + T - SRL) / 1.25; //controls base motion
-            MFL = (SFB - T + SRL) / 1.25; //slows down robot to make it more manageable
-            MBR = (SFB + T + SRL) / 1.25;
-            MBL = (SFB - T - SRL) / 1.25;
-
-            telemetry.update();
-
-            // Normalize the values so neither exceed +/- 1.0
-            max = Math.max(Math.abs(MFR), Math.abs(MFL));
-            if (max > 1.0) {
-                MFR /= max; //can't exceed 1
-                MFL /= max;
-                MBR /= max;
-                MBL /= max;
-            }
-            if(Math.abs(MFR) < 0.1)
-                MFR = 0;
-            if(Math.abs(MFL) < 0.1)
-                MFL = 0;
-            if(Math.abs(MBR) < 0.1)
-                MBR = 0;
-            if(Math.abs(MBL) < 0.1)
-                MBL = 0;
-
-            robot.MFR.setPower(MFR);
-            robot.MFL.setPower(MFL);
-            robot.MBR.setPower(MBR);
-            robot.MBL.setPower(MBL);
-
-            telemetry.addData("MBR", robot.MBR.getCurrentPosition() + " | " + MBR); //Printing motor position on phone
-            telemetry.addData("MBL", robot.MBL.getCurrentPosition() + " | " + MBL);
-            telemetry.addData("MFR", robot.MFR.getCurrentPosition() + " | " + MFR);
-            telemetry.addData("MFL", robot.MFL.getCurrentPosition() + " | " + MFL);
+            if(p <= 0)
+                p = 0.1;
+            if(i < 0)
+                i = 0;
+            if(d < 0)
+                d = 0;
+            if(f < 0)
+                f = 0;
 
 
-            //The part that checks to see if the robot is tipping
-            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
-            current_x = angles.firstAngle;
-            if ( checkTip(target_x - current_x)){ //If the robot is tipping
-                //turn off the motors
-                robot.MFR.setPower(0);
-                robot.MFL.setPower(0);
-                robot.MBR.setPower(0);
-                robot.MBL.setPower(0);
+            robot.ArmBase.setVelocityPIDFCoefficients(p, i, d, f);
+            robot.ArmBase.setPositionPIDFCoefficients(p);
+            robot.ArmJoint.setVelocityPIDFCoefficients(p, i, d, f);
+            robot.ArmJoint.setPositionPIDFCoefficients(p);
 
-                //Wait for 0.5 second
-                now_seconds = runtime.seconds();
-                while ( runtime.seconds() < now_seconds + 0.5);
-            }
+            telemetry.addData("P", p);
+            telemetry.addData("I", i);
+            telemetry.addData("D", d);
+            telemetry.addData("F", f);
 
             /******************************************* ARM MOVE **********************************************************/
 
-            x -= gamepad2.right_stick_y * 0.25;
+            x -= gamepad2.right_stick_y * 0.5;
 
-            if(y > 5)
-                xMin = -1.5;
+            if(y > 7)
+                xMin = -0.5;
             else
                 xMin = 2;
 
@@ -173,7 +135,7 @@ public class Tele1 extends LinearOpMode {
                 x = xMin;
 
 
-            y -= gamepad2.left_stick_y * 0.25;
+            y -= gamepad2.left_stick_y * 0.5;
 
             if(x > 2)
                 yMin = 0.5;
@@ -203,12 +165,12 @@ public class Tele1 extends LinearOpMode {
                 pos[0] = 0;
             robot.ArmBase.setTargetPosition((int) pos[0]);
             robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.ArmBase.setPower(0.8);
+            robot.ArmBase.setPower(1);
             robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
             robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.ArmJoint.setPower(0.6);
+            robot.ArmJoint.setPower(1);
             if(servoPos == 0)
-                servoPos = (2.0*Math.PI - pos[2])/(1.35*Math.PI);
+                servoPos = (2.0*Math.PI - pos[2] - 0.1)/(1.4*Math.PI);
             if(servoPos >= 0 && servoPos <= 1)
                 robot.EndJoint.setPosition(servoPos);
             else if(servoPos < 0)
@@ -222,7 +184,7 @@ public class Tele1 extends LinearOpMode {
             /********************************************* GRIPPER **********************************************************/
 
             if(gamepad2.a){
-                robot.Gripper.setPosition(0.0);
+                robot.Gripper.setPosition(0.2);
             } else if(gamepad2.b){
                 robot.Gripper.setPosition(1.0);
             }
@@ -234,19 +196,8 @@ public class Tele1 extends LinearOpMode {
             telemetry.addData("Base: ", robot.ArmBase.getCurrentPosition());
             telemetry.addData("Joint: ", robot.ArmJoint.getCurrentPosition());
             telemetry.addData("Servo: ", robot.EndJoint.getPosition());
-            telemetry.update();
-
-            /******************************************* FOUNDATION **********************************************************/
-
-            if (gamepad1.left_bumper)
-                robot.FoundationMover.setPosition(.2);
-            else if(gamepad1.right_bumper)
-                robot.FoundationMover.setPosition(.8);
-
-
-            telemetry.update();
             // Pause for metronome tick.  40 mS each cycle = update 25 times a second.
-
+            telemetry.update();
             robot.waitForTick(40);
         }
     }

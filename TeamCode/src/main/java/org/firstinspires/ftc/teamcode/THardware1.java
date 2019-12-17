@@ -95,7 +95,7 @@ public class THardware1 implements ArmHardware
         MBR.setPower(0);
         MBL.setPower(0);
 
-        EndJoint.setPosition(0.0);
+        EndJoint.setPosition(0.3);
         Gripper.setPosition(0.0);
 
     }
