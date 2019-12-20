@@ -56,9 +56,9 @@ import java.util.Comparator;
 import java.util.List;
 
 
-@Autonomous(name = "Auto1", group = "Auto")
+@Autonomous(name = "Auto1Blue", group = "Auto")
 //@Disabled
-public class Auto1 extends LinearOpMode {
+public class AutoBlueFoundation extends LinearOpMode {
 
     AHardware1 robot = new AHardware1();
     private ElapsedTime runtime = new ElapsedTime();
