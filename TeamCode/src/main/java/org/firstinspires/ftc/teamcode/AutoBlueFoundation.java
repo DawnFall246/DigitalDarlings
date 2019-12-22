@@ -123,16 +123,27 @@ public class AutoBlueFoundation extends LinearOpMode {
         //gyroMoveStraight("r", 2000);
 
         //Move blue foundation
-        PIDMove(0, .5, 40.46, .25, 0.15, .01);
+
+        // Move straight 87 cm
+        PIDMove(0, 0.8, 87, .25, 0.15, .01);
+        // turn 90 degrees clockwise
         turn(-90);
-        PIDMove(0, .5, 120.02, .25, 0.15, .01);
+        //move straight 143.515 cm
+        PIDMove(0, 0.8, 143.515, .25, 0.15, .01);
+        // turn 90 degrees clockwise
         turn(-90);
+        // bring up flats
         robot.FoundationMover.setPosition(0.17);
-        PIDMove(0, .5, 1, .25, 0.15, .01);
+        //move forward 0.21 cm on foundation mover
+        PIDMove(0, 0.8, 0.21, .25, 0.15, .01);
+        // bring down flats
         robot.FoundationMover.setPosition(0.67);
-        strafeLeft(47,5,3);
+        //strafe 143.515 cm
+        PIDMove(90, 0.8, 143.515, 0.1, 0, 0.01);
+        // bring up flats and let go of foundation mover
         robot.FoundationMover.setPosition(0.17);
-        PIDMove(0, .5, 40.46, .25, 0.15, .01);
+        // return under bridge
+        PIDMove(0, 0.8, 87.21, .25, 0.15, .01);
 
         telemetry.addData("Finish", "");
         robot.MBR.setPower(0);
