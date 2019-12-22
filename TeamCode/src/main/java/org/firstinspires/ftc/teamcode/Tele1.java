@@ -222,9 +222,9 @@ public class Tele1 extends LinearOpMode {
             /********************************************* GRIPPER **********************************************************/
 
             if(gamepad2.a){
-                robot.Gripper.setPosition(0.0);
-            } else if(gamepad2.b){
                 robot.Gripper.setPosition(1.0);
+            } else if(gamepad2.b){
+                robot.Gripper.setPosition(0.0);
             }
 
 

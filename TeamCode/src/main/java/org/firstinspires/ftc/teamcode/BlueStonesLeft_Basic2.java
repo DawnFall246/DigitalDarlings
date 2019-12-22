@@ -30,12 +30,10 @@
 package org.firstinspires.ftc.teamcode;
 
 
-import android.graphics.Point;
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
@@ -53,12 +51,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
-import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
@@ -68,9 +62,9 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
 
-@Autonomous(name = "Blue Stones Left Basic 1", group = "Auto")
+@Autonomous(name = "Blue Stones Left Basic 2", group = "Auto")
 //@Disabled
-public class BlueStonesLeft_Basic1 extends LinearOpMode {
+public class BlueStonesLeft_Basic2 extends LinearOpMode {
 
     AHardware3 robot = new AHardware3();
     ArtArm arm = new ArtArm(14.5, 15.75, 3, 1, 1, 2);
@@ -139,14 +133,14 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
     static double yaw_intended;
 
     final static double[] underPos = {2, 1.5, 0.4};
-    final static double[] grabPos = {3, 3.7, 0};
-    final static double[] liftPos = {18, 12, 0};
-    final static double[] lowerPos = {18, 6, 0};
+    final static double[] grabPos = {3, 3.5, 0};
+    final static double[] liftPos = {17, 12, 0};
+    final static double[] lowerPos = {17, 8.5, 0};
 
     final static double CountsPerInchFB = 15000.0/59.0;
     final static double CountsPerInchLR = 10000.0/34.0;
-    static double fullSpeedSlowFB = 10.0;
-    static double fullSpeedSlowLR = 3.5;
+    static double fullSpeedSlowFB = 8.5;
+    static double fullSpeedSlowLR = 2.0;
     final static double displacementGain = 1;
 
     final static int[] RED = {132, 101, 25, 29};
@@ -295,15 +289,15 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
 
 
         //Move forward 18”
-        PIDMove(0, 1, 18, 0.01, 0, 0.01,false);
+        PIDMove(0, 1, 20, 0.01, 0, 0.01,false);
         //Strafe 24” left
-        PIDMove(90, 1, 24, 0.01, 0, 0.01,  false);
+        PIDMove(90, 1, 20, 0.01, 0, 0.01,  false);
         //Pause
         stonePos = updateVuforia(allTrackables);
         //If notDetected
         if(stonePos.get(2) == -1){
             //Strafe 5” left
-            PIDMove(90, 0.3, 6.5, 0.01, 0, 0.01, false);
+            PIDMove(90, 0.3, 7.5, 0.01, 0, 0.01, false);
         } else {
             //Strafe so arm is centered
             telemetry.addData("displacement", CAMERA_LEFT_DISPLACEMENT / mmPerInch);
@@ -335,8 +329,8 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
             robot.EndJoint.setPosition(0.5);
         robot.Gripper.setPosition(0.0);
         sleep(500);
-        //Move forward 13”
-        PIDMove(0, 1, 13, 0.01, 0, 0.01, false);
+        //Move forward 10”
+        PIDMove(0, 0.6, 10, 0.01, 0, 0.01, false);
         //Grab stone
         robot.Gripper.setPosition(1.0);
         sleep(500);
@@ -362,13 +356,17 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         else
             robot.EndJoint.setPosition(0.5);
         //Move back 13”
-        PIDMove(180, 1, 13, 0.01, 0, 0.01, false);
-        //Strafe right until line detected
-        PIDMove(270, 0.8, 0, 0.01, 0.01, 0.01, true);
+        PIDMove(180, 1, 2, 0.01, 0, 0.01, false);
+        //Turn to 90 deg
+        turnTo(90, 0.9, 1);
+        //Move forward 43” while lifting arm
+        if(stonePos.get(2) == -1)
+            PIDMove(0, 1, 80, 0.01, 0.01, 0.01, false);
+        else
+            PIDMove(0, 1, 80 + ((stonePos.get(1) - CAMERA_LEFT_DISPLACEMENT) / mmPerInch * displacementGain),
+                    0.01, 0.01, 0.01, false);
+        turnTo(0, 0.9, 1);
 
-        //Strafe right 43” while lifting arm
-        //PIDMove(270, 1, 20, 0.01, 0, 0.01, false);
-        PIDMove(270, 1, 43, 0.01, 0, 0.01, false);
         pos = arm.goToXY(liftPos[0], liftPos[1]);
         servoPos = liftPos[2];
         if(pos[0] > 0)
@@ -412,7 +410,7 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         else
             robot.EndJoint.setPosition(0.5);
         //waitUntilPosition(robot.ArmJoint, 2, 15);
-        sleep(250);
+        sleep(500);
         robot.Gripper.setPosition(0.0);
         sleep(500);
         //Under bridge position
@@ -437,9 +435,10 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         else
             robot.EndJoint.setPosition(0.5);
 
-        //sleep(8000);
-        //Strafe right to line
-        PIDMove(90, 0.7, 0, 0.01, 0, 0.01, true);
+        //Turn to 270
+        turnTo(270, .9,  1);
+        //Forward to line
+        PIDMove(0, 0.7, 0, 0.01, 0, 0.01, true);
 
         telemetry.update();
         telemetry.addData("Time", totalTime.seconds());
@@ -554,7 +553,7 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         boolean notFinished = false;
         double used_speed = speed;
 
-        double Dslow = speed * (fullSpeedSlowFB * Math.cos(dir * Math.PI / 180.0) + fullSpeedSlowLR * Math.sin(dir * Math.PI / 180.0));
+        double Dslow = speed * (fullSpeedSlowFB * Math.cos(dir) + fullSpeedSlowLR * Math.sin(dir));
 
         do{
             count ++;
@@ -588,7 +587,7 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
             telemetry.addData("Drive", drive);
             telemetry.addData("Strafe", strafe);
             telemetry.addData("Turn", turn);
-            //telemetry.addData("Dslow", Dslow);
+            telemetry.addData("Dslow", Dslow);
             telemetry.addData("Speed", used_speed);
             telemetry.addData("Yaw", yaw);
             telemetry.addData(dist + " ", estDist);

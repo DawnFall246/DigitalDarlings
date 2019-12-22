@@ -41,6 +41,8 @@ public class AHardware3 implements ArmHardware
     public Servo EndJoint = null;
     public Servo Gripper  = null;
 
+    public DcMotor Light = null;
+
     public ColorSensor Color = null;
     public BNO055IMU IMU = null;
 
@@ -70,6 +72,8 @@ public class AHardware3 implements ArmHardware
         EndJoint = hwMap.servo.get("wrist");
         Gripper  = hwMap.servo.get("gripper");
 
+        Light = hwMap.dcMotor.get("light");
+
         Color = hwMap.colorSensor.get("color");
 
         ColorValues.setAlpha(Color.alpha());
@@ -94,8 +98,9 @@ public class AHardware3 implements ArmHardware
         MBL.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
 
         ArmBase.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
-        ArmJoint.setDirection(DcMotor.Direction.REVERSE); // Set to FORWARD if using AndyMark motors
+        ArmJoint.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
 
+        Light.setDirection(DcMotor.Direction.FORWARD);
 
         MFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         MFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -113,6 +118,11 @@ public class AHardware3 implements ArmHardware
         MBL.setTargetPosition(0);
         MBL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+        MFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        MFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        MBR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        MBL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         ArmBase.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         ArmJoint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -121,6 +131,8 @@ public class AHardware3 implements ArmHardware
         ArmJoint.setTargetPosition(0);
         ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+        Light.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        Light.setPower(0.7);
 
 
     }
