@@ -33,10 +33,10 @@ public class THardware2 implements ArmHardware
     public DcMotorEx ArmBase  = null;
     public DcMotorEx ArmJoint = null;
 
-    public static double P = 10;
-    public static double I = 0;
-    public static double D = 0;
-    public static double F = 0;
+    public static double p = 10.6;
+    public static double i = 1.4;
+    public static double d = 0;
+    public static double f = 0;
 
     public Servo EndJoint = null;
     public Servo Gripper  = null;
@@ -89,22 +89,10 @@ public class THardware2 implements ArmHardware
         MBR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         MBL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        PIDFCoefficients BaseOg = ArmBase.getPIDFCoefficients(DcMotorEx.RunMode.RUN_TO_POSITION);
-        PIDFCoefficients JointOg = ArmBase.getPIDFCoefficients(DcMotorEx.RunMode.RUN_TO_POSITION);
-
-
-        // change coefficients using methods included with DcMotorEx class.
-        PIDFCoefficients BaseNew = new PIDFCoefficients(P, I, D, F);
-        ArmBase.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, BaseNew);
-
-        PIDFCoefficients JointNew = new PIDFCoefficients(P, I, D, F);
-        ArmJoint.setPIDFCoefficients(DcMotor.RunMode.RUN_TO_POSITION, JointNew);
-
-
-        ArmBase.setTargetPosition(0);
-        ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        ArmJoint.setTargetPosition(0);
-        ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        ArmBase.setVelocityPIDFCoefficients(p, i, d, f);
+        ArmBase.setPositionPIDFCoefficients(p);
+        ArmJoint.setVelocityPIDFCoefficients(p, i, d, f);
+        ArmJoint.setPositionPIDFCoefficients(p);
 
         // Set all motors to zero power
         MFR.setPower(0);
@@ -112,8 +100,8 @@ public class THardware2 implements ArmHardware
         MBR.setPower(0);
         MBL.setPower(0);
 
-        EndJoint.setPosition(0.3);
-        Gripper.setPosition(0.0);
+        EndJoint.setPosition(0.1);
+        Gripper.setPosition(0.5);
 
     }
 

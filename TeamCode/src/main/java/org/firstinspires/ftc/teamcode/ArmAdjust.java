@@ -43,7 +43,7 @@ public class ArmAdjust extends LinearOpMode {
         double x = 2;
         double y = 1;
         double wrist = robot.EndJoint.getPosition();
-
+        double grip = robot.Gripper.getPosition();
         // Send telemetry message to signify robot waiting;
         telemetry.addData("Say", "Hello Driver");
         telemetry.update();
@@ -72,42 +72,65 @@ public class ArmAdjust extends LinearOpMode {
             robot.EndJoint.setPosition(wrist);
             */
 
-            if(x > reach.maxX())
-                x = reach.maxX();
-            if(x < 0)
-                x = 0;
-            else
-                x += gamepad1.left_stick_x;
+            wrist -= gamepad1.left_stick_y * 0.01;
+
+            if (wrist > 1)
+                wrist = 1;
+            else if (wrist < 0)
+                wrist = 0;
+
+            robot.EndJoint.setPosition(wrist);
 
 
-            if(y > reach.maxY())
-                y = reach.maxY();
-            if(y < 0)
-                y = 0;
-            else
-                y -= gamepad1.left_stick_y;
+            grip += gamepad1.left_stick_x * 0.01;
 
+            if (grip > 1)
+                grip = 1;
+            else if (grip < 0)
+                grip = 0;
+
+            robot.Gripper.setPosition(grip);
+
+            x -= gamepad1.right_stick_x * 0.5;
+
+
+            if(x > reach.maxX() - 0.5)
+                x = reach.maxX() - 0.5;
+            if(x < 1)
+                x = 1;
+
+
+            y -= gamepad1.right_stick_y * 0.5;
+
+
+            if(y > reach.maxY() - 0.5)
+                y = reach.maxY() - 0.5;
+            if(y < 1)
+                y = 1;
+
+
+            if(gamepad1.a){
+                robot.Gripper.setPosition(0.55);
+            } else if(gamepad1.b){
+                robot.Gripper.setPosition(0.4);
+            }
 
             pos = reach.goToXY(x, y);
+            if(pos[0] > 0)
+                pos[0] = 0;
             robot.ArmBase.setTargetPosition((int) pos[0]);
             robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.ArmBase.setPower(0.3);
+            robot.ArmBase.setPower(1);
             robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
             robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.ArmJoint.setPower(0.3);
-            //robot.EndJoint.setPosition(pos[2]/(1.5*Math.PI));
-
-            if (gamepad1.left_bumper)
-                robot.FoundationMover.setPosition(.2);
-            else if(gamepad1.right_bumper)
-                robot.FoundationMover.setPosition(.9);
+            robot.ArmJoint.setPower(1);
 
             telemetry.addData("X: ", reach.getX());
             telemetry.addData("Y: ", reach.getY());
             telemetry.addData(" " + pos[0] + " " + pos[1] + " " + pos[2], "");
             telemetry.addData("Base: ", robot.ArmBase.getCurrentPosition());
             telemetry.addData("Joint: ", robot.ArmJoint.getCurrentPosition());
-            telemetry.addData("Servo: ", robot.EndJoint.getPosition());
+            telemetry.addData("Servo: ", robot.EndJoint.getPosition() + "" + wrist);
             telemetry.update();
             // Pause for metronome tick.  40 mS each cycle = update 25 times a second.
 
