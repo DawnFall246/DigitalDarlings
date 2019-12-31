@@ -225,7 +225,7 @@ public class Tele1 extends LinearOpMode {
             if(gamepad2.back){
                 robot.Gripper.setPosition(0.2);
                 servoPos = 1;
-                pos = reach.goToXY(9.5, 7.10);
+                pos = reach.goToXY(8.5, 8.10);
                 if(pos[0] > 0)
                     pos[0] = 0;
                 robot.ArmBase.setTargetPosition((int) pos[0]);
@@ -237,7 +237,7 @@ public class Tele1 extends LinearOpMode {
                 robot.EndJoint.setPosition(servoPos);
                 sleep(1000);
 
-                pos = reach.goToXY(3.85, 7.10);
+                pos = reach.goToXY(2.5, 7.00);
                 if(pos[0] > 0)
                     pos[0] = 0;
                 robot.ArmBase.setTargetPosition((int) pos[0]);
@@ -247,8 +247,11 @@ public class Tele1 extends LinearOpMode {
                 robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 robot.ArmJoint.setPower(0.6);
                 robot.EndJoint.setPosition(servoPos);
+                sleep(500);
+                robot.Gripper.setPosition(0.6);
                 sleep(1000);
-
+                x = 3.85;
+                y = 25.5;
                 pos = reach.goToXY(3.85, 25.5);
                 if(pos[0] > 0)
                     pos[0] = 0;
@@ -261,7 +264,7 @@ public class Tele1 extends LinearOpMode {
                 robot.EndJoint.setPosition(servoPos);
                 sleep(1000);
 
-                robot.Gripper.setPosition(0.55);
+                robot.Gripper.setPosition(0.65);
                 sleep(1000);
             }
 

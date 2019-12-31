@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcontroller.external.samples.SensorREV2mDistance;
@@ -47,8 +48,8 @@ public class AHardware3 implements ArmHardware
     public Servo FoundationMover = null;
 
     public DcMotor Light = null;
-
     public ColorSensor Color = null;
+    public TouchSensor Bump = null;
     public Rev2mDistanceSensor Range = null;
     public BNO055IMU IMU = null;
 
@@ -79,8 +80,8 @@ public class AHardware3 implements ArmHardware
         Gripper  = hwMap.servo.get("gripper");
 
         Light = hwMap.dcMotor.get("light");
-
         Color = hwMap.colorSensor.get("color");
+        Bump = hwMap.touchSensor.get("bump");
 
         FoundationMover = hwMap.servo.get("foundation");
 

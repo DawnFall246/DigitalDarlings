@@ -68,13 +68,15 @@ import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocaliz
 public class Auto extends LinearOpMode {
 
     /***************************************************Parameters***********************************************************************/
-    static int startPos;       // 0 = Close to wall    | sensed
-    static int track = 1;      // 0 = Inner track      | programmed
-    static int placePos = 1;   // 0 = Near             | programmed
-    static int foundPos = 0;   // 0 = Not moved        | programmed
-    static int doNav = 0;      // 0 = Don't do         | programmed
-    static int doRepo = 1;     // 0 = Don't do         | programmed
-    static int alliance = 0;   // 0 = Blue             | programmed
+    static int startPos;        // 0 = Close to wall    | sensed
+    static int track = 1;       // 0 = Inner track      | programmed
+    static int placePos = 1;    // 0 = Near             | programmed
+    static int foundPos = 0;    // 0 = Not moved        | programmed
+                                // 1 = Moved partially
+                                // 2 = Moved fully
+    static int doNav = 0;       // 0 = Don't do         | programmed
+    static int doRepo = 1;      // 0 = Don't do         | programmed
+    static int alliance = 0;    // 0 = Blue             | programmed
 
     AHardware3 robot = new AHardware3();
     ArtArm arm = new ArtArm(14.5, 15.75, 3, 1, 1, 2);
@@ -135,7 +137,7 @@ public class Auto extends LinearOpMode {
     //Parameters
     double[] pos = new double[3];
     double servoPos = 0;
-    final double servoRange = (1.45*Math.PI);
+    final double servoRange = (1.6*Math.PI);
     double basePower = 1.0;
     double jointPower = 1.0;
 
@@ -145,8 +147,8 @@ public class Auto extends LinearOpMode {
     final static double[] grabPos = {3, 3.2, 0};
     final static double[] liftPosClose = {15, 10, 0};
     final static double[] lowerPosClose = {15, 7.5, 0};
-    final static double[] liftPosFar = {25, 10, 0};
-    final static double[] lowerPosFar = {25, 7.5, 0};
+    final static double[] liftPosFar = {25, 12, 0};
+    final static double[] lowerPosFar = {25, 8.5, 0};
 
     final static double CountsPerInchFB = 15000.0/59.0;
     final static double CountsPerInchLR = 10000.0/34.0;
@@ -307,28 +309,28 @@ public class Auto extends LinearOpMode {
 
         if(track == 0){
             //Move forward 20”
-            PIDMove(0, 1, 20, 0.01, 0, 0.01,false);
+            PIDMove(0, 1, 20, 0.01, 0, 0.01,false, false);
             //Strafe 20” left
-            PIDMove(90, 1, 20, 0.01, 0, 0.01,  false);
+            PIDMove(90, 1, 20, 0.01, 0, 0.01,  false, false);
         } else {
             //Strafe 20” left
-            PIDMove(90, 1, 20, 0.01, 0, 0.01,  false);
+            PIDMove(90, 1, 20, 0.01, 0, 0.01,  false, false);
             //Move forward 20”
-            PIDMove(0, 1, 20, 0.01, 0, 0.01,false);
+            PIDMove(0, 1, 20, 0.01, 0, 0.01,false, false);
         }
         //Pause
         stonePos = updateVuforia(allTrackables);
         //If notDetected
         if(stonePos.get(2) == -1){
             //Strafe 5” left
-            PIDMove(90, 0.3, 7.5, 0.01, 0, 0.01, false);
+            PIDMove(90, 0.3, 7.5, 0.01, 0, 0.01, false, false);
         } else {
             //Strafe so arm is centered
             telemetry.addData("displacement", CAMERA_LEFT_DISPLACEMENT / mmPerInch);
             telemetry.addData("move", (stonePos.get(1) - CAMERA_LEFT_DISPLACEMENT) / mmPerInch);
             telemetry.update();
             PIDMove(270, 0.3, (stonePos.get(1) - CAMERA_LEFT_DISPLACEMENT) / mmPerInch * displacementGain,
-                    0.01, 0, 0.01, false);
+                    0.01, 0, 0.01, false, false);
         }
         //Open gripper
         pos = arm.goToXY(grabPos[0], grabPos[1]);
@@ -352,9 +354,9 @@ public class Auto extends LinearOpMode {
         else
             robot.EndJoint.setPosition(0.5);
         robot.Gripper.setPosition(0.0);
-        sleep(500);
+        //sleep(500);
         //Move forward 8”
-        PIDMove(0, 0.6, 8, 0.01, 0, 0.01, false);
+        PIDMove(0, 0.6, 8, 0.01, 0, 0.01, false, false);
         //Grab stone
         robot.Gripper.setPosition(1.0);
         sleep(500);
@@ -380,7 +382,7 @@ public class Auto extends LinearOpMode {
         else
             robot.EndJoint.setPosition(0.5);
         //Move back 3” or 3" + 20"
-        PIDMove(180, 1, 3 + track*21, 0.01, 0, 0.01, false);
+        PIDMove(180, 1, 3 + track*21, 0.01, 0, 0.01, false, false);
         range = robot.Range.getDistance(DistanceUnit.INCH);
         //Turn to 90 deg
         turnTo(90, 0.9, 1);
@@ -388,12 +390,12 @@ public class Auto extends LinearOpMode {
             //Move forward while lifting arm
             if (startPos == 1) {
                 if (stonePos.get(2) == -1)
-                    PIDMove(0, 1, 73 + placePos*12, 0.01, 0.01, 0.01, false);
+                    PIDMove(0, 1, 79 + placePos*12, 0.01, 0.01, 0.01, false, false);
                 else
                     PIDMove(0, 1, 73 + placePos*12 + ((stonePos.get(1) - CAMERA_LEFT_DISPLACEMENT) / mmPerInch * displacementGain),
-                            0.01, 0.01, 0.01, false);
+                            0.01, 0.01, 0.01, false, false);
             } else
-                PIDMove(0, 1, 105 + placePos*12 - range, 0.01, 0.01, 0.01, false);
+                PIDMove(0, 1, 105 + placePos*12 - range, 0.01, 0.01, 0.01, false, false);
             turnTo(0, 0.9, 1);
 
             pos = arm.goToXY(liftPosClose[0], liftPosClose[1]);
@@ -419,7 +421,7 @@ public class Auto extends LinearOpMode {
             if(track == 0)
                 sleep(500);
             //If on the outer track, move forward 20"
-            PIDMove(0, 1, track*21, 0.01, 0, 0.01, false);
+            PIDMove(0, 1, track*19, 0.01, 0, 0.01, false, false);
             //Drop stone
             pos = arm.goToXY(lowerPosClose[0], lowerPosClose[1]);
             servoPos = lowerPosClose[2];
@@ -456,6 +458,7 @@ public class Auto extends LinearOpMode {
             robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
             robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.ArmJoint.setPower(jointPower);
+            robot.Gripper.setPosition(.5);
             if (servoPos == 0)
                 servoPos = (2.0 * Math.PI - pos[2]) / servoRange;
             if (servoPos >= 0 && servoPos <= 1)
@@ -468,33 +471,35 @@ public class Auto extends LinearOpMode {
                 robot.EndJoint.setPosition(0.5);
             //Turn to 270 or 180
             if(doRepo == 1){
-                turnTo(180, 0.9, 1);
-                PIDMove(180, 0.5, 5, 0.01, 0, 0.01, false);
-                robot.FoundationMover.setPosition(0.8);
+                //PIDMove(180, 1, 3, 0.01, 0, 0.01, false);
+                turnTo(175, 0.9, 1);
+                PIDMove(180, 0.3, 6.5, 0.01, 0, 0.01, false, true);
+                robot.FoundationMover.setPosition(0.95);
                 robot.Gripper.setPosition(0.65);
                 robot.EndJoint.setPosition(0.0);
                 sleep(500);
-                PIDMove(20, 1, 34, 0.1, 0.05, 0.01, false);
+                PIDMove(10, 1, 33, 0.15, 0.075, 0.01, false, false);
                 robot.FoundationMover.setPosition(0.2);
                 sleep(400);
             } else {
                 //If outer track, move back 20"
-                PIDMove(180, 1, track * 21, 0.01, 0, 0.01, false);
+                PIDMove(180, 1, track * 21, 0.01, 0, 0.01, false, false);
             }
             if(doNav == 1){
                 //Forward to line
-                PIDMove(270, 1, 0, 0.01, 0, 0.01, true);
+                PIDMove(270, 1, 0, 0.01, 0, 0.01, true, false);
             }
         } else {
             //Move forward
             if(startPos == 1) {
                 if (stonePos.get(2) == -1)
-                    PIDMove(0, 1, 60 , 0.01, 0.01, 0.01, false);
+                    PIDMove(0, 1, 60 , 0.01, 0.01, 0.01, false, false);
                 else
-                    PIDMove(0, 1, 60 + ((stonePos.get(1) - CAMERA_LEFT_DISPLACEMENT) / mmPerInch * displacementGain),
-                            0.01, 0.01, 0.01, false);
+                    PIDMove(0, 1, 54 + ((stonePos.get(1) - CAMERA_LEFT_DISPLACEMENT) / mmPerInch * displacementGain),
+                            0.01, 0.01, 0.01, false, false);
             } else
-                PIDMove(0, 1, 90 - range, 0.01, 0.01, 0.01, false);
+                PIDMove(0, 1, 87 - range, 0.01, 0.01, 0.01, false, false);
+
             //Lift arm
             pos = arm.goToXY(liftPosFar[0], liftPosFar[1]);
             servoPos = liftPosFar[2];
@@ -516,7 +521,12 @@ public class Auto extends LinearOpMode {
                 robot.EndJoint.setPosition(1);
             else
                 robot.EndJoint.setPosition(0.5);
-            sleep(500);
+            if(foundPos == 2 && track == 0)
+                turnTo(130, 0.9, 1);
+            else if(foundPos == 1 && track == 1)
+                turnTo(75, 0.9, 1);
+            else if((foundPos == 1 && track == 0) || (foundPos == 2 && track == 1))
+                turnTo(100, 0.9, 1);
             //Drop stone
             pos = arm.goToXY(lowerPosFar[0], lowerPosFar[1]);
             servoPos = lowerPosFar[2];
@@ -564,8 +574,9 @@ public class Auto extends LinearOpMode {
             else
                 robot.EndJoint.setPosition(0.5);
             if(doNav == 1){
+                turnTo(90, 0.9, 1);
                 //Forward to line
-                PIDMove(180, 0.6, 0, 0.01, 0, 0.01, true);
+                PIDMove(180, 0.6, 12, 0.01, 0, 0.01, false, false);
             }
         }
 
@@ -643,7 +654,7 @@ public class Auto extends LinearOpMode {
         return new VectorF(-1, 5, -1);
     }
 
-    public void PIDMove(double dir, double speed, double dist, double Kp, double Ki, double dt, boolean toColor){
+    public void PIDMove(double dir, double speed, double dist, double Kp, double Ki, double dt, boolean toColor, boolean toBump){
         /*
         dir = approx direction in degrees to move relative to forward face of robot.
         speed = speed to move [0,1]
@@ -747,9 +758,12 @@ public class Auto extends LinearOpMode {
                 notFinished = opModeIsActive() && dB > dM*2.5 && dR > dM*2.5;// && runtime.seconds() < 6;
                 telemetry.addData("Finished?", !notFinished);
                 telemetry.update();
-            }
-            else
+            } else
                 notFinished = opModeIsActive() && Math.abs(estDist) < Math.abs(dist);
+
+            if(toBump){
+                notFinished = notFinished && !robot.Bump.isPressed();
+            }
 
             sleep((int) (dt*1000));
         } while(notFinished);
