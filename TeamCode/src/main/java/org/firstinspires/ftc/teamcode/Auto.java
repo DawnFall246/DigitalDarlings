@@ -30,12 +30,10 @@
 package org.firstinspires.ftc.teamcode;
 
 
-import android.graphics.Point;
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.vuforia.PIXEL_FORMAT;
 import com.vuforia.Vuforia;
@@ -48,17 +46,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.Acceleration;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
-import org.firstinspires.ftc.robotcore.external.tfod.TFObjectDetector;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES;
@@ -68,9 +63,20 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.
 import static org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer.CameraDirection.BACK;
 
 
-@Autonomous(name = "Blue Stones Left Basic 1", group = "Auto")
+@Autonomous(name = "Autonomous_110010", group = "Auto")
 //@Disabled
-public class BlueStonesLeft_Basic1 extends LinearOpMode {
+public class Auto extends LinearOpMode {
+
+    /***************************************************Parameters***********************************************************************/
+    static int startPos;        // 0 = Close to wall    | sensed
+    static int track = 1;       // 0 = Inner track      | programmed
+    static int placePos = 1;    // 0 = Near             | programmed
+    static int foundPos = 0;    // 0 = Not moved        | programmed
+                                // 1 = Moved partially
+                                // 2 = Moved fully
+    static int doNav = 0;       // 0 = Don't do         | programmed
+    static int doRepo = 1;      // 0 = Don't do         | programmed
+    static int alliance = 0;    // 0 = Blue             | programmed
 
     AHardware3 robot = new AHardware3();
     ArtArm arm = new ArtArm(14.5, 15.75, 3, 1, 1, 2);
@@ -127,26 +133,27 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
     private float phoneZRotate    = 0;
 
     VectorF stonePos;
-    int config;
-
+    double range = 30;
     //Parameters
     double[] pos = new double[3];
     double servoPos = 0;
-    final double servoRange = (1.35*Math.PI);
+    final double servoRange = (1.6*Math.PI);
     double basePower = 1.0;
     double jointPower = 1.0;
 
     static double yaw_intended;
 
-    final static double[] underPos = {2, 1.5, 0.4};
-    final static double[] grabPos = {3, 3.7, 0};
-    final static double[] liftPos = {18, 12, 0};
-    final static double[] lowerPos = {18, 6, 0};
+    final static double[] underPos = {2, 1.5, 0.2};
+    final static double[] grabPos = {3, 3.2, 0};
+    final static double[] liftPosClose = {15, 10, 0};
+    final static double[] lowerPosClose = {15, 7.5, 0};
+    final static double[] liftPosFar = {25, 12, 0};
+    final static double[] lowerPosFar = {25, 8.5, 0};
 
     final static double CountsPerInchFB = 15000.0/59.0;
     final static double CountsPerInchLR = 10000.0/34.0;
-    static double fullSpeedSlowFB = 10.0;
-    static double fullSpeedSlowLR = 3.5;
+    static double fullSpeedSlowFB = 8.5;
+    static double fullSpeedSlowLR = 2.0;
     final static double displacementGain = 1;
 
     final static int[] RED = {132, 101, 25, 29};
@@ -248,7 +255,7 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         // In this example, it is centered (left to right), but forward of the middle of the robot, and above ground level.
         final float CAMERA_FORWARD_DISPLACEMENT  = -7.0f * mmPerInch;   // eg: Camera is 7 Inches behind gripper
         final float CAMERA_VERTICAL_DISPLACEMENT = 13.0f * mmPerInch;   // eg: Camera is 13 Inches above ground
-        final float CAMERA_LEFT_DISPLACEMENT     = 8.0f * mmPerInch;     // eg: Camera is 7 inches left of the gripper
+        final float CAMERA_LEFT_DISPLACEMENT     = 7.0f * mmPerInch;     // eg: Camera is 7 inches left of the gripper
 
         OpenGLMatrix robotFromCamera = OpenGLMatrix
                 .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
@@ -260,7 +267,6 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         }
 
         updateVuforia(allTrackables);
-
         //initVuforia();
 
         robot.init(hardwareMap);
@@ -272,6 +278,13 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         /** Wait for the game to begin */
         telemetry.addData(">", "Press Play to start tracking");
         telemetry.update();
+        range = robot.Range.getDistance(DistanceUnit.INCH);
+        if(Math.abs(29.5 - range) < 4)
+            startPos = 0;
+        else
+            startPos = 1;
+        telemetry.addData("Start", startPos);
+        telemetry.update();
         runtime.reset();
         waitForStart();
         totalTime.reset();
@@ -279,8 +292,9 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
 
         targetsSkyStone.activate();
         /*
-        PIDMove(0, 1, 20, 0.01, 0, 0.01, false);
+        PIDMove(0, 1, 100, 0.01, 0, 0.01, false);
         sleep(20000);
+
         PIDMove(0, 1, 40, 0.01, 0, 0.01, false);
         turnTo(90, 1, 0.5);
         sleep(2000);
@@ -293,24 +307,30 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         sleep(5000);
         */
 
-
-        //Move forward 18”
-        PIDMove(0, 1, 18, 0.01, 0, 0.01,false);
-        //Strafe 24” left
-        PIDMove(90, 1, 24, 0.01, 0, 0.01,  false);
+        if(track == 0){
+            //Move forward 20”
+            PIDMove(0, 1, 20, 0.01, 0, 0.01,false, false);
+            //Strafe 20” left
+            PIDMove(90, 1, 20, 0.01, 0, 0.01,  false, false);
+        } else {
+            //Strafe 20” left
+            PIDMove(90, 1, 20, 0.01, 0, 0.01,  false, false);
+            //Move forward 20”
+            PIDMove(0, 1, 20, 0.01, 0, 0.01,false, false);
+        }
         //Pause
         stonePos = updateVuforia(allTrackables);
         //If notDetected
         if(stonePos.get(2) == -1){
             //Strafe 5” left
-            PIDMove(90, 0.3, 6.5, 0.01, 0, 0.01, false);
+            PIDMove(90, 0.3, 7.5, 0.01, 0, 0.01, false, false);
         } else {
             //Strafe so arm is centered
             telemetry.addData("displacement", CAMERA_LEFT_DISPLACEMENT / mmPerInch);
             telemetry.addData("move", (stonePos.get(1) - CAMERA_LEFT_DISPLACEMENT) / mmPerInch);
             telemetry.update();
             PIDMove(270, 0.3, (stonePos.get(1) - CAMERA_LEFT_DISPLACEMENT) / mmPerInch * displacementGain,
-                    0.01, 0, 0.01, false);
+                    0.01, 0, 0.01, false, false);
         }
         //Open gripper
         pos = arm.goToXY(grabPos[0], grabPos[1]);
@@ -334,9 +354,9 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         else
             robot.EndJoint.setPosition(0.5);
         robot.Gripper.setPosition(0.0);
-        sleep(500);
-        //Move forward 13”
-        PIDMove(0, 1, 13, 0.01, 0, 0.01, false);
+        //sleep(500);
+        //Move forward 8”
+        PIDMove(0, 0.6, 8, 0.01, 0, 0.01, false, false);
         //Grab stone
         robot.Gripper.setPosition(1.0);
         sleep(500);
@@ -361,85 +381,205 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
             robot.EndJoint.setPosition(1);
         else
             robot.EndJoint.setPosition(0.5);
-        //Move back 13”
-        PIDMove(180, 1, 13, 0.01, 0, 0.01, false);
-        //Strafe right until line detected
-        PIDMove(270, 0.8, 0, 0.01, 0.01, 0.01, true);
+        //Move back 3” or 3" + 20"
+        PIDMove(180, 1, 3 + track*21, 0.01, 0, 0.01, false, false);
+        range = robot.Range.getDistance(DistanceUnit.INCH);
+        //Turn to 90 deg
+        turnTo(90, 0.9, 1);
+        if(foundPos == 0) {
+            //Move forward while lifting arm
+            if (startPos == 1) {
+                if (stonePos.get(2) == -1)
+                    PIDMove(0, 1, 79 + placePos*12, 0.01, 0.01, 0.01, false, false);
+                else
+                    PIDMove(0, 1, 73 + placePos*12 + ((stonePos.get(1) - CAMERA_LEFT_DISPLACEMENT) / mmPerInch * displacementGain),
+                            0.01, 0.01, 0.01, false, false);
+            } else
+                PIDMove(0, 1, 105 + placePos*12 - range, 0.01, 0.01, 0.01, false, false);
+            turnTo(0, 0.9, 1);
 
-        //Strafe right 43” while lifting arm
-        //PIDMove(270, 1, 20, 0.01, 0, 0.01, false);
-        PIDMove(270, 1, 43, 0.01, 0, 0.01, false);
-        pos = arm.goToXY(liftPos[0], liftPos[1]);
-        servoPos = liftPos[2];
-        if(pos[0] > 0)
-            pos[0] = 0;
-        robot.ArmBase.setTargetPosition((int) pos[0]);
-        robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.ArmBase.setPower(basePower);
-        robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
-        robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.ArmJoint.setPower(jointPower);
-        if(servoPos == 0)
-            servoPos = (2.0*Math.PI - pos[2])/servoRange;
-        if(servoPos >= 0 && servoPos <= 1)
-            robot.EndJoint.setPosition(servoPos);
-        else if(servoPos < 0)
-            robot.EndJoint.setPosition(0);
-        else if(servoPos > 1)
-            robot.EndJoint.setPosition(1);
-        else
-            robot.EndJoint.setPosition(0.5);
-        sleep(500);
-        //Drop stone
-        pos = arm.goToXY(lowerPos[0], lowerPos[1]);
-        servoPos = lowerPos[2];
-        if(pos[0] > 0)
-            pos[0] = 0;
-        robot.ArmBase.setTargetPosition((int) pos[0]);
-        robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.ArmBase.setPower(basePower);
-        robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
-        robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.ArmJoint.setPower(jointPower);
-        if(servoPos == 0)
-            servoPos = (2.0*Math.PI - pos[2])/servoRange;
-        if(servoPos >= 0 && servoPos <= 1)
-            robot.EndJoint.setPosition(servoPos);
-        else if(servoPos < 0)
-            robot.EndJoint.setPosition(0);
-        else if(servoPos > 1)
-            robot.EndJoint.setPosition(1);
-        else
-            robot.EndJoint.setPosition(0.5);
-        //waitUntilPosition(robot.ArmJoint, 2, 15);
-        sleep(250);
-        robot.Gripper.setPosition(0.0);
-        sleep(500);
-        //Under bridge position
-        pos = arm.goToXY(underPos[0], underPos[1]);
-        servoPos = underPos[2];
-        if(pos[0] > 0)
-            pos[0] = 0;
-        robot.ArmBase.setTargetPosition((int) pos[0]);
-        robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.ArmBase.setPower(basePower);
-        robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
-        robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.ArmJoint.setPower(jointPower);
-        if(servoPos == 0)
-            servoPos = (2.0*Math.PI - pos[2])/servoRange;
-        if(servoPos >= 0 && servoPos <= 1)
-            robot.EndJoint.setPosition(servoPos);
-        else if(servoPos < 0)
-            robot.EndJoint.setPosition(0);
-        else if(servoPos > 1)
-            robot.EndJoint.setPosition(1);
-        else
-            robot.EndJoint.setPosition(0.5);
+            pos = arm.goToXY(liftPosClose[0], liftPosClose[1]);
+            servoPos = liftPosClose[2];
+            if (pos[0] > 0)
+                pos[0] = 0;
+            robot.ArmBase.setTargetPosition((int) pos[0]);
+            robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmBase.setPower(basePower);
+            robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
+            robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmJoint.setPower(jointPower);
+            if (servoPos == 0)
+                servoPos = (2.0 * Math.PI - pos[2]) / servoRange;
+            if (servoPos >= 0 && servoPos <= 1)
+                robot.EndJoint.setPosition(servoPos);
+            else if (servoPos < 0)
+                robot.EndJoint.setPosition(0);
+            else if (servoPos > 1)
+                robot.EndJoint.setPosition(1);
+            else
+                robot.EndJoint.setPosition(0.5);
+            if(track == 0)
+                sleep(500);
+            //If on the outer track, move forward 20"
+            PIDMove(0, 1, track*19, 0.01, 0, 0.01, false, false);
+            //Drop stone
+            pos = arm.goToXY(lowerPosClose[0], lowerPosClose[1]);
+            servoPos = lowerPosClose[2];
+            if (pos[0] > 0)
+                pos[0] = 0;
+            robot.ArmBase.setTargetPosition((int) pos[0]);
+            robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmBase.setPower(basePower);
+            robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
+            robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmJoint.setPower(jointPower);
+            if (servoPos == 0)
+                servoPos = (2.0 * Math.PI - pos[2]) / servoRange;
+            if (servoPos >= 0 && servoPos <= 1)
+                robot.EndJoint.setPosition(servoPos);
+            else if (servoPos < 0)
+                robot.EndJoint.setPosition(0);
+            else if (servoPos > 1)
+                robot.EndJoint.setPosition(1);
+            else
+                robot.EndJoint.setPosition(0.5);
+            //waitUntilPosition(robot.ArmJoint, 2, 15);
+            sleep(500);
+            robot.Gripper.setPosition(0.0);
+            sleep(500);
+            //Under bridge position
+            pos = arm.goToXY(underPos[0], underPos[1]);
+            servoPos = underPos[2];
+            if (pos[0] > 0)
+                pos[0] = 0;
+            robot.ArmBase.setTargetPosition((int) pos[0]);
+            robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmBase.setPower(basePower);
+            robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
+            robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmJoint.setPower(jointPower);
+            robot.Gripper.setPosition(.5);
+            if (servoPos == 0)
+                servoPos = (2.0 * Math.PI - pos[2]) / servoRange;
+            if (servoPos >= 0 && servoPos <= 1)
+                robot.EndJoint.setPosition(servoPos);
+            else if (servoPos < 0)
+                robot.EndJoint.setPosition(0);
+            else if (servoPos > 1)
+                robot.EndJoint.setPosition(1);
+            else
+                robot.EndJoint.setPosition(0.5);
+            //Turn to 270 or 180
+            if(doRepo == 1){
+                //PIDMove(180, 1, 3, 0.01, 0, 0.01, false);
+                turnTo(175, 0.9, 1);
+                PIDMove(180, 0.3, 6.5, 0.01, 0, 0.01, false, true);
+                robot.FoundationMover.setPosition(0.95);
+                robot.Gripper.setPosition(0.65);
+                robot.EndJoint.setPosition(0.0);
+                sleep(500);
+                PIDMove(10, 1, 33, 0.15, 0.075, 0.01, false, false);
+                robot.FoundationMover.setPosition(0.2);
+                sleep(400);
+            } else {
+                //If outer track, move back 20"
+                PIDMove(180, 1, track * 21, 0.01, 0, 0.01, false, false);
+            }
+            if(doNav == 1){
+                //Forward to line
+                PIDMove(270, 1, 0, 0.01, 0, 0.01, true, false);
+            }
+        } else {
+            //Move forward
+            if(startPos == 1) {
+                if (stonePos.get(2) == -1)
+                    PIDMove(0, 1, 60 , 0.01, 0.01, 0.01, false, false);
+                else
+                    PIDMove(0, 1, 54 + ((stonePos.get(1) - CAMERA_LEFT_DISPLACEMENT) / mmPerInch * displacementGain),
+                            0.01, 0.01, 0.01, false, false);
+            } else
+                PIDMove(0, 1, 87 - range, 0.01, 0.01, 0.01, false, false);
 
-        //sleep(8000);
-        //Strafe right to line
-        PIDMove(90, 0.7, 0, 0.01, 0, 0.01, true);
+            //Lift arm
+            pos = arm.goToXY(liftPosFar[0], liftPosFar[1]);
+            servoPos = liftPosFar[2];
+            if(pos[0] > 0)
+                pos[0] = 0;
+            robot.ArmBase.setTargetPosition((int) pos[0]);
+            robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmBase.setPower(basePower);
+            robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
+            robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmJoint.setPower(jointPower);
+            if(servoPos == 0)
+                servoPos = (2.0*Math.PI - pos[2])/servoRange;
+            if(servoPos >= 0 && servoPos <= 1)
+                robot.EndJoint.setPosition(servoPos);
+            else if(servoPos < 0)
+                robot.EndJoint.setPosition(0);
+            else if(servoPos > 1)
+                robot.EndJoint.setPosition(1);
+            else
+                robot.EndJoint.setPosition(0.5);
+            if(foundPos == 2 && track == 0)
+                turnTo(130, 0.9, 1);
+            else if(foundPos == 1 && track == 1)
+                turnTo(75, 0.9, 1);
+            else if((foundPos == 1 && track == 0) || (foundPos == 2 && track == 1))
+                turnTo(100, 0.9, 1);
+            //Drop stone
+            pos = arm.goToXY(lowerPosFar[0], lowerPosFar[1]);
+            servoPos = lowerPosFar[2];
+            if(pos[0] > 0)
+                pos[0] = 0;
+            robot.ArmBase.setTargetPosition((int) pos[0]);
+            robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmBase.setPower(basePower);
+            robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
+            robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmJoint.setPower(jointPower);
+            if(servoPos == 0)
+                servoPos = (2.0*Math.PI - pos[2])/servoRange;
+            if(servoPos >= 0 && servoPos <= 1)
+                robot.EndJoint.setPosition(servoPos);
+            else if(servoPos < 0)
+                robot.EndJoint.setPosition(0);
+            else if(servoPos > 1)
+                robot.EndJoint.setPosition(1);
+            else
+                robot.EndJoint.setPosition(0.5);
+            //waitUntilPosition(robot.ArmJoint, 2, 15);
+            sleep(500);
+            robot.Gripper.setPosition(0.0);
+            sleep(500);
+            //Under bridge position
+            pos = arm.goToXY(underPos[0], underPos[1]);
+            servoPos = underPos[2];
+            if(pos[0] > 0)
+                pos[0] = 0;
+            robot.ArmBase.setTargetPosition((int) pos[0]);
+            robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmBase.setPower(basePower);
+            robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
+            robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.ArmJoint.setPower(jointPower);
+            if(servoPos == 0)
+                servoPos = (2.0*Math.PI - pos[2])/servoRange;
+            if(servoPos >= 0 && servoPos <= 1)
+                robot.EndJoint.setPosition(servoPos);
+            else if(servoPos < 0)
+                robot.EndJoint.setPosition(0);
+            else if(servoPos > 1)
+                robot.EndJoint.setPosition(1);
+            else
+                robot.EndJoint.setPosition(0.5);
+            if(doNav == 1){
+                turnTo(90, 0.9, 1);
+                //Forward to line
+                PIDMove(180, 0.6, 12, 0.01, 0, 0.01, false, false);
+            }
+        }
+
 
         telemetry.update();
         telemetry.addData("Time", totalTime.seconds());
@@ -514,7 +654,7 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         return new VectorF(-1, 5, -1);
     }
 
-    public void PIDMove(double dir, double speed, double dist, double Kp, double Ki, double dt, boolean toColor){
+    public void PIDMove(double dir, double speed, double dist, double Kp, double Ki, double dt, boolean toColor, boolean toBump){
         /*
         dir = approx direction in degrees to move relative to forward face of robot.
         speed = speed to move [0,1]
@@ -554,7 +694,7 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         boolean notFinished = false;
         double used_speed = speed;
 
-        double Dslow = speed * (fullSpeedSlowFB * Math.cos(dir * Math.PI / 180.0) + fullSpeedSlowLR * Math.sin(dir * Math.PI / 180.0));
+        double Dslow = speed * (fullSpeedSlowFB * Math.cos(dir) + fullSpeedSlowLR * Math.sin(dir));
 
         do{
             count ++;
@@ -588,7 +728,7 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
             telemetry.addData("Drive", drive);
             telemetry.addData("Strafe", strafe);
             telemetry.addData("Turn", turn);
-            //telemetry.addData("Dslow", Dslow);
+            telemetry.addData("Dslow", Dslow);
             telemetry.addData("Speed", used_speed);
             telemetry.addData("Yaw", yaw);
             telemetry.addData(dist + " ", estDist);
@@ -618,9 +758,12 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
                 notFinished = opModeIsActive() && dB > dM*2.5 && dR > dM*2.5;// && runtime.seconds() < 6;
                 telemetry.addData("Finished?", !notFinished);
                 telemetry.update();
-            }
-            else
+            } else
                 notFinished = opModeIsActive() && Math.abs(estDist) < Math.abs(dist);
+
+            if(toBump){
+                notFinished = notFinished && !robot.Bump.isPressed();
+            }
 
             sleep((int) (dt*1000));
         } while(notFinished);
@@ -707,6 +850,9 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
     }
 
     public void turnTo(double init_target_angle, double speed, double tolerance) {
+        //init_target_angle += 180*alliance;
+        if(alliance == 1)
+            init_target_angle *= -1;
         robot.MFL.setPower(0);
         robot.MBL.setPower(0);
         robot.MFR.setPower(0);
@@ -730,7 +876,6 @@ public class BlueStonesLeft_Basic1 extends LinearOpMode {
         while (Math.abs(yaw_theta - target_angle) > tolerance  &&  opModeIsActive()) {
             angles = robot.IMU.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
             yaw_theta = angles.thirdAngle;
-
 
             if(Math.abs(yaw_theta - target_angle) < 20)
                 used_speed = 0.1;

@@ -2,14 +2,18 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
+import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcontroller.external.samples.SensorREV2mDistance;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.Velocity;
 
@@ -41,7 +45,12 @@ public class AHardware3 implements ArmHardware
     public Servo EndJoint = null;
     public Servo Gripper  = null;
 
+    public Servo FoundationMover = null;
+
+    public DcMotor Light = null;
     public ColorSensor Color = null;
+    public TouchSensor Bump = null;
+    public Rev2mDistanceSensor Range = null;
     public BNO055IMU IMU = null;
 
     /* local OpMode members. */
@@ -70,7 +79,11 @@ public class AHardware3 implements ArmHardware
         EndJoint = hwMap.servo.get("wrist");
         Gripper  = hwMap.servo.get("gripper");
 
+        Light = hwMap.dcMotor.get("light");
         Color = hwMap.colorSensor.get("color");
+        Bump = hwMap.touchSensor.get("bump");
+
+        FoundationMover = hwMap.servo.get("foundation");
 
         ColorValues.setAlpha(Color.alpha());
         ColorValues.setRed(Color.red());
@@ -88,14 +101,17 @@ public class AHardware3 implements ArmHardware
         IMU.initialize(parameters);
         IMU.startAccelerationIntegration(new Position(), new Velocity(), 1000);////////////////////////THIS IS A TEST////////////////////////////////////////////
 
+        Range = (Rev2mDistanceSensor) hwMap.get(DistanceSensor.class, "range");
+
         MFR.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
         MFL.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
         MBR.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
         MBL.setDirection(DcMotor.Direction.REVERSE); // Set to REVERSE if using AndyMark motors
 
         ArmBase.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
-        ArmJoint.setDirection(DcMotor.Direction.REVERSE); // Set to FORWARD if using AndyMark motors
+        ArmJoint.setDirection(DcMotor.Direction.FORWARD); // Set to FORWARD if using AndyMark motors
 
+        Light.setDirection(DcMotor.Direction.FORWARD);
 
         MFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         MFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -113,6 +129,11 @@ public class AHardware3 implements ArmHardware
         MBL.setTargetPosition(0);
         MBL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+        MFR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        MFL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        MBR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        MBL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
         ArmBase.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         ArmJoint.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -121,7 +142,10 @@ public class AHardware3 implements ArmHardware
         ArmJoint.setTargetPosition(0);
         ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
+        Light.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        Light.setPower(0.7);
 
+        FoundationMover.setPosition(0.2);
 
     }
 

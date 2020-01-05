@@ -41,7 +41,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 public class Tele1 extends LinearOpMode {
 
     /* Declare OpMode members. */
-    THardware1 robot = new THardware1();   // Use a hardware
+    THardware2 robot = new THardware2();   // Use a hardware
     ElapsedTime runtime = new ElapsedTime();
     BNO055IMU imu;
     Orientation angles;
@@ -89,7 +89,8 @@ public class Tele1 extends LinearOpMode {
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
-
+        robot.EndJoint.setPosition(0.6);
+        robot.Gripper.setPosition(0.1);
         //The "flat" robot angle
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
         target_x = angles.firstAngle;
@@ -99,14 +100,14 @@ public class Tele1 extends LinearOpMode {
 
             /******************************************* BASE MOVE **********************************************************/
 
-            SFB = -gamepad1.left_stick_y; /*The joystick goes negative when pushed forwards, so negate it*/
-            SRL = (gamepad1.right_stick_x + 0.5 * (gamepad2.right_trigger - gamepad2.left_trigger))*1.25; // Check sign
+            SFB = -gamepad1.right_stick_y; /*The joystick goes negative when pushed forwards, so negate it*/
+            SRL = (gamepad1.right_stick_x + 0.5 * gamepad2.left_stick_x)*1.25; // Check sign
             T = -gamepad1.left_stick_x;
 
             // Run wheels in POV mode
 
-            if(Math.abs(SFB) > 0.4 && Math.abs(T) < 0.2)
-                T = 0;
+            if(Math.abs(SFB) > 0.4 && Math.abs(SRL) < 0.2)
+                SRL = 0;
 
             MFR = (SFB + T - SRL) / 1.25; //controls base motion
             MFL = (SFB - T + SRL) / 1.25; //slows down robot to make it more manageable
@@ -160,7 +161,7 @@ public class Tele1 extends LinearOpMode {
 
             /******************************************* ARM MOVE **********************************************************/
 
-            x -= gamepad2.right_stick_y * 0.25;
+            x -= gamepad2.right_stick_x * 0.5;
 
             if(y > 5)
                 xMin = -1.5;
@@ -173,7 +174,21 @@ public class Tele1 extends LinearOpMode {
                 x = xMin;
 
 
-            y -= gamepad2.left_stick_y * 0.25;
+            y -= gamepad2.right_stick_y * 0.5;
+
+            while(gamepad2.dpad_up){
+                telemetry.addData("Up", "");
+                telemetry.update();
+                if(!gamepad2.dpad_up)
+                    y += 4;
+            }
+            while(gamepad2.dpad_down){
+                telemetry.addData("Down", "");
+                telemetry.update();
+                if(!gamepad2.dpad_down)
+                    y -= 4;
+            }
+
 
             if(x > 2)
                 yMin = 0.5;
@@ -186,10 +201,19 @@ public class Tele1 extends LinearOpMode {
                 y = yMin;
 
 
-
-            if(gamepad2.y){
+            if(gamepad2.right_bumper){
+                robot.Gripper.setPosition(1.0);
+                sleep(500);
+                x = 2;
+                y = 1.5;
+                servoPos = 0.4;
+            }else if(gamepad2.left_bumper){
                 x = 3;
-                y = 3;
+                y = 7;
+                servoPos = 0;
+            }else if(gamepad2.y){
+                x = 3;
+                y = 2.6;
                 servoPos = 0;
             }else if(gamepad2.x){
                 x = 2;
@@ -198,17 +222,63 @@ public class Tele1 extends LinearOpMode {
             }else if(!(x == 2 && y == 2))
                 servoPos = 0;
 
+            if(gamepad2.back){
+                robot.Gripper.setPosition(0.2);
+                servoPos = 1;
+                pos = reach.goToXY(8.5, 8.10);
+                if(pos[0] > 0)
+                    pos[0] = 0;
+                robot.ArmBase.setTargetPosition((int) pos[0]);
+                robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.ArmBase.setPower(1);
+                robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
+                robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.ArmJoint.setPower(1);
+                robot.EndJoint.setPosition(servoPos);
+                sleep(1000);
+
+                pos = reach.goToXY(2.5, 7.00);
+                if(pos[0] > 0)
+                    pos[0] = 0;
+                robot.ArmBase.setTargetPosition((int) pos[0]);
+                robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.ArmBase.setPower(0.6);
+                robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
+                robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.ArmJoint.setPower(0.6);
+                robot.EndJoint.setPosition(servoPos);
+                sleep(500);
+                robot.Gripper.setPosition(0.6);
+                sleep(1000);
+                x = 3.85;
+                y = 25.5;
+                pos = reach.goToXY(3.85, 25.5);
+                if(pos[0] > 0)
+                    pos[0] = 0;
+                robot.ArmBase.setTargetPosition((int) pos[0]);
+                robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.ArmBase.setPower(0.6);
+                robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
+                robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                robot.ArmJoint.setPower(0.6);
+                robot.EndJoint.setPosition(servoPos);
+                sleep(1000);
+
+                robot.Gripper.setPosition(0.65);
+                sleep(1000);
+            }
+
             pos = reach.goToXY(x, y);
             if(pos[0] > 0)
                 pos[0] = 0;
             robot.ArmBase.setTargetPosition((int) pos[0]);
             robot.ArmBase.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.ArmBase.setPower(0.8);
+            robot.ArmBase.setPower(1);
             robot.ArmJoint.setTargetPosition(-1 * (int) pos[1]);
             robot.ArmJoint.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.ArmJoint.setPower(0.6);
+            robot.ArmJoint.setPower(1);
             if(servoPos == 0)
-                servoPos = (2.0*Math.PI - pos[2])/(1.35*Math.PI);
+                servoPos = (2.0*Math.PI - pos[2])/(1.45*Math.PI) - 0.025;
             if(servoPos >= 0 && servoPos <= 1)
                 robot.EndJoint.setPosition(servoPos);
             else if(servoPos < 0)
@@ -218,15 +288,13 @@ public class Tele1 extends LinearOpMode {
             else
                 robot.EndJoint.setPosition(0.5);
 
-
             /********************************************* GRIPPER **********************************************************/
 
             if(gamepad2.a){
-                robot.Gripper.setPosition(0.0);
+                robot.Gripper.setPosition(0.65);
             } else if(gamepad2.b){
-                robot.Gripper.setPosition(1.0);
+                robot.Gripper.setPosition(0.0);
             }
-
 
             telemetry.addData("X: ", reach.getX());
             telemetry.addData("Y: ", reach.getY());
